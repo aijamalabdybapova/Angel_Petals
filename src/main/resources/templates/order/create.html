@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/header}">
+<head>
+    <title>Оформление заказа - Цветочный магазин</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="py-3">
+        <div class="container">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/home}">Главная</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/bouquets}">Букеты</a></li>
+                <li class="breadcrumb-item active">Оформление заказа</li>
+            </ol>
+        </div>
+    </nav>
+
+    <!-- Order Creation -->
+    <section class="py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Order Form -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">
+                                <i class="fas fa-clipboard-list me-2"></i>Информация о заказе
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            <form th:action="@{/orders/create}" th:object="${orderDto}" method="post">
+                                <!-- Recipient Information -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h5 class="border-bottom pb-2 mb-3">
+                                            <i class="fas fa-user me-2"></i>Информация о получателе
+                                        </h5>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="recipientName" class="form-label required">Имя получателя</label>
+                                        <input type="text" class="form-control" id="recipientName"
+                                               th:field="*{recipientName}"
+                                               placeholder="Введите имя получателя" required>
+                                        <div class="text-danger" th:if="${#fields.hasErrors('recipientName')}">
+                                            <small th:errors="*{recipientName}"></small>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="recipientPhone" class="form-label required">Телефон получателя</label>
+                                        <input type="tel" class="form-control" id="recipientPhone"
+                                               th:field="*{recipientPhone}"
+                                               placeholder="+7 (999) 123-45-67" required>
+                                        <div class="text-danger" th:if="${#fields.hasErrors('recipientPhone')}">
+                                            <small th:errors="*{recipientPhone}"></small>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 mb-3">
+                                        <label for="recipientEmail" class="form-label">Email получателя</label>
+                                        <input type="email" class="form-control" id="recipientEmail"
+                                               th:field="*{recipientEmail}"
+                                               placeholder="email@example.com">
+                                        <div class="text-danger" th:if="${#fields.hasErrors('recipientEmail')}">
+                                            <small th:errors="*{recipientEmail}"></small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Delivery Information -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h5 class="border-bottom pb-2 mb-3">
+                                            <i class="fas fa-truck me-2"></i>Информация о доставке
+                                        </h5>
+                                    </div>
+
+                                    <div class="col-12 mb-3">
+                                        <label for="deliveryAddress" class="form-label required">Адрес доставки</label>
+                                        <textarea class="form-control" id="deliveryAddress"
+                                                  th:field="*{deliveryAddress}"
+                                                  placeholder="Введите полный адрес доставки"
+                                                  rows="3" required></textarea>
+                                        <div class="text-danger" th:if="${#fields.hasErrors('deliveryAddress')}">
+                                            <small th:errors="*{deliveryAddress}"></small>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="deliveryDate" class="form-label">Желаемая дата доставки</label>
+                                        <input type="datetime-local" class="form-control" id="deliveryDate"
+                                               th:field="*{deliveryDate}">
+                                        <div class="form-text">
+                                            Оставьте пустым для доставки в ближайшее время
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Additional Information -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h5 class="border-bottom pb-2 mb-3">
+                                            <i class="fas fa-sticky-note me-2"></i>Дополнительная информация
+                                        </h5>
+                                    </div>
+
+                                    <div class="col-12 mb-3">
+                                        <label for="notes" class="form-label">Примечания к заказу</label>
+                                        <textarea class="form-control" id="notes"
+                                                  th:field="*{notes}"
+                                                  placeholder="Особые пожелания, время доставки и т.д."
+                                                  rows="4"></textarea>
+                                        <div class="form-text">
+                                            Укажите любые особые пожелания к заказу
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="d-flex justify-content-between">
+                                            <a th:href="@{/bouquets}" class="btn btn-outline-secondary">
+                                                <i class="fas fa-arrow-left me-2"></i>Вернуться к букетам
+                                            </a>
+                                            <button type="submit" class="btn btn-primary btn-lg">
+                                                <i class="fas fa-check me-2"></i>Подтвердить заказ
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <!-- Order Summary -->
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                                <i class="fas fa-receipt me-2"></i>Сводка заказа
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="orderSummary">
+                                <div class="text-center py-4">
+                                    <p class="text-muted">Загрузка информации о заказе...</p>
+                                </div>
+                            </div>
+
+                            <div class="border-top pt-3 mt-3">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong>Итого:</strong>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <strong id="totalAmount">₽0.00</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <small>
+                                        После подтверждения заказа с вами свяжется наш менеджер для уточнения деталей
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="card shadow-sm mt-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                                <i class="fas fa-phone me-2"></i>Контактная информация
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-2">
+                                <i class="fas fa-phone text-primary me-2"></i>
+                                <strong>+7 (999) 123-45-67</strong>
+                            </p>
+                            <p class="mb-2">
+                                <i class="fas fa-envelope text-primary me-2"></i>
+                                <strong>info@flowershop.ru</strong>
+                            </p>
+                            <p class="mb-0">
+                                <i class="fas fa-clock text-primary me-2"></i>
+                                <strong>Ежедневно 9:00 - 21:00</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load cart items and display order summary
+        loadOrderSummary();
+
+        // Set minimum delivery date to today
+        const deliveryDateInput = document.getElementById('deliveryDate');
+        if (deliveryDateInput) {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(12, 0, 0, 0);
+
+            const minDate = tomorrow.toISOString().slice(0, 16);
+            deliveryDateInput.min = minDate;
+        }
+
+        function loadOrderSummary() {
+            const cartItems = JSON.parse(localStorage.getItem('flowerShopCart')) || [];
+            const orderSummary = document.getElementById('orderSummary');
+            const totalAmountElement = document.getElementById('totalAmount');
+
+            if (cartItems.length === 0) {
+                orderSummary.innerHTML = `
+                    <div class="text-center py-3">
+                        <i class="fas fa-shopping-cart fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Корзина пуста</p>
+                    </div>
+                `;
+                totalAmountElement.textContent = '₽0.00';
+                return;
+            }
+
+            // In a real application, this would fetch bouquet details from API
+            fetchBouquetDetails().then(bouquets => {
+                let totalAmount = 0;
+                let summaryHTML = '';
+
+                cartItems.forEach(cartItem => {
+                    const bouquet = bouquets.find(b => b.id == cartItem.bouquetId);
+                    if (bouquet) {
+                        const itemTotal = bouquet.price * cartItem.quantity;
+                        totalAmount += itemTotal;
+
+                        summaryHTML += `
+                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                                <div>
+                                    <h6 class="mb-1" th:text="${bouquet.name}">${bouquet.name}</h6>
+                                    <small class="text-muted">${cartItem.quantity} × ₽${bouquet.price.toFixed(2)}</small>
+                                </div>
+                                <strong>₽${itemTotal.toFixed(2)}</strong>
+                            </div>
+                        `;
+                    }
+                });
+
+                orderSummary.innerHTML = summaryHTML;
+                totalAmountElement.textContent = `₽${totalAmount.toFixed(2)}`;
+            });
+        }
+
+        function fetchBouquetDetails() {
+            // This would typically make API calls to get bouquet details
+            // For demo, return empty array
+            return Promise.resolve([]);
+        }
+
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const cartItems = JSON.parse(localStorage.getItem('flowerShopCart')) || [];
+            if (cartItems.length === 0) {
+                e.preventDefault();
+                alert('Корзина пуста. Добавьте товары перед оформлением заказа.');
+                return false;
+            }
+        });
+    });
+</script>
+
+<style>
+    .required::after {
+        content: " *";
+        color: #dc3545;
+    }
+</style>
+</body>
+</html>

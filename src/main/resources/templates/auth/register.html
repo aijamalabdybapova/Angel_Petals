@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/header}">
+<head>
+    <title>Регистрация - Цветочный магазин</title>
+    <style>
+        .register-container {
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+        }
+        .register-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .register-header {
+            background: linear-gradient(135deg, #e91e63, #9c27b0);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 2rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="register-container py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="card register-card">
+                        <div class="register-header">
+                            <h2><i class="fas fa-user-plus me-2"></i>Регистрация</h2>
+                            <p class="mb-0">Создайте свой аккаунт</p>
+                        </div>
+                        <div class="card-body p-4">
+                            <!-- Success/Error Messages -->
+                            <div th:if="${param.success}" class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                Регистрация прошла успешно! Теперь вы можете войти.
+                            </div>
+
+                            <form th:action="@{/register}" th:object="${user}" method="post">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="firstName" class="form-label">
+                                            <i class="fas fa-user me-2"></i>Имя
+                                        </label>
+                                        <input type="text" class="form-control" id="firstName"
+                                               th:field="*{firstName}"
+                                               placeholder="Введите ваше имя" required>
+                                        <div class="text-danger" th:if="${#fields.hasErrors('firstName')}">
+                                            <small th:errors="*{firstName}"></small>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="lastName" class="form-label">Фамилия</label>
+                                        <input type="text" class="form-control" id="lastName"
+                                               th:field="*{lastName}"
+                                               placeholder="Введите вашу фамилию" required>
+                                        <div class="text-danger" th:if="${#fields.hasErrors('lastName')}">
+                                            <small th:errors="*{lastName}"></small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">
+                                        <i class="fas fa-at me-2"></i>Имя пользователя
+                                    </label>
+                                    <input type="text" class="form-control" id="username"
+                                           th:field="*{username}"
+                                           placeholder="Введите имя пользователя" required>
+                                    <div class="text-danger" th:if="${#fields.hasErrors('username')}">
+                                        <small th:errors="*{username}"></small>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">
+                                        <i class="fas fa-envelope me-2"></i>Email
+                                    </label>
+                                    <input type="email" class="form-control" id="email"
+                                           th:field="*{email}"
+                                           placeholder="Введите ваш email" required>
+                                    <div class="text-danger" th:if="${#fields.hasErrors('email')}">
+                                        <small th:errors="*{email}"></small>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="phoneNumber" class="form-label">
+                                        <i class="fas fa-phone me-2"></i>Телефон
+                                    </label>
+                                    <input type="tel" class="form-control" id="phoneNumber"
+                                           th:field="*{phoneNumber}"
+                                           placeholder="+7 (999) 123-45-67">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">
+                                        <i class="fas fa-home me-2"></i>Адрес
+                                    </label>
+                                    <textarea class="form-control" id="address"
+                                              th:field="*{address}"
+                                              placeholder="Введите ваш адрес для доставки"
+                                              rows="2"></textarea>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="password" class="form-label">
+                                            <i class="fas fa-lock me-2"></i>Пароль
+                                        </label>
+                                        <input type="password" class="form-control" id="password"
+                                               th:field="*{password}"
+                                               placeholder="Введите пароль" required>
+                                        <div class="text-danger" th:if="${#fields.hasErrors('password')}">
+                                            <small th:errors="*{password}"></small>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="confirmPassword" class="form-label">
+                                            <i class="fas fa-lock me-2"></i>Подтверждение пароля
+                                        </label>
+                                        <input type="password" class="form-control" id="confirmPassword"
+                                               th:field="*{confirmPassword}"
+                                               placeholder="Повторите пароль" required>
+                                        <div class="text-danger" th:if="${#fields.hasErrors('confirmPassword')}">
+                                            <small th:errors="*{confirmPassword}"></small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 py-2 mb-3">
+                                    <i class="fas fa-user-plus me-2"></i>Зарегистрироваться
+                                </button>
+
+                                <div class="text-center">
+                                    <p class="mb-0">
+                                        Уже есть аккаунт?
+                                        <a th:href="@{/login}" class="text-primary text-decoration-none">
+                                            Войдите
+                                        </a>
+                                    </p>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

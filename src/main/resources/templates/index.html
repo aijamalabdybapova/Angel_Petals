@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/header}">
+<head>
+    <title>Главная - Цветочный магазин "Букет Счастья"</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Hero Section -->
+    <section class="hero-section bg-light-pink py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold text-dark mb-4">
+                        Дарите эмоции с нашими букетами
+                    </h1>
+                    <p class="lead mb-4">
+                        Самые свежие цветы и уникальные композиции для ваших особенных моментов.
+                        Доставка по всему городу в течение 2 часов.
+                    </p>
+                    <a th:href="@{/bouquets}" class="btn btn-primary btn-lg me-3">
+                        <i class="fas fa-shopping-cart me-2"></i>Выбрать букет
+                    </a>
+                    <a href="#featured" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-eye me-2"></i>Смотреть коллекцию
+                    </a>
+                </div>
+                <div class="col-lg-6">
+                    <img th:src="@{/images/hero-bouquet.jpg}" alt="Красивый букет"
+                         class="img-fluid rounded shadow" style="max-height: 500px;">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Bouquets -->
+    <section id="featured" class="py-5">
+        <div class="container">
+            <div class="row mb-5">
+                <div class="col text-center">
+                    <h2 class="section-title">Популярные букеты</h2>
+                    <p class="text-muted">Самые востребованные композиции наших клиентов</p>
+                </div>
+            </div>
+
+            <div class="row" th:if="${bouquets.empty}">
+                <div class="col text-center">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Пока нет доступных букетов
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4" th:unless="${bouquets.empty}">
+                <div class="col-sm-6 col-lg-4 col-xl-3" th:each="bouquet : ${bouquets.content}">
+                    <div class="card bouquet-card shadow-sm border-0 h-100">
+                        <div class="card-img-container">
+                            <img th:src="${bouquet.imageUrl != null} ?
+                                @{'/uploads/' + ${bouquet.imageUrl}} :
+                                @{/images/default-bouquet.jpg}"
+                                 class="card-img-top"
+                                 th:alt="${bouquet.name}"
+                                 onerror="this.src='/images/default-bouquet.jpg'">
+                            <div class="card-overlay" th:if="${!bouquet.inStock}">
+                                <span class="badge bg-danger">Нет в наличии</span>
+                            </div>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title" th:text="${bouquet.name}">Название букета</h5>
+                            <p class="card-text flex-grow-1 text-muted small description-text"
+                               th:text="${bouquet.description ?: 'Описание отсутствует'}">
+                                Описание букета
+                            </p>
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center">
+                                <span class="h5 text-primary mb-0"
+                                      th:text="'₽' + ${#numbers.formatDecimal(bouquet.price, 0, 'COMMA', 2, 'POINT')}">
+                                    2500
+                                </span>
+                                    <div class="btn-group">
+                                        <a th:href="@{/bouquets/{id}(id=${bouquet.id})}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button th:if="${bouquet.inStock}"
+                                                class="btn btn-sm btn-primary add-to-cart"
+                                                th:data-bouquet-id="${bouquet.id}">
+                                            <i class="fas fa-cart-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="text-muted" th:if="${bouquet.category != null}">
+                                    <i class="fas fa-tag me-1"></i>
+                                    <span th:text="${bouquet.category.name}">Категория</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="row mt-4" th:if="${bouquets.totalPages > 1}">
+                <div class="col text-center">
+                    <nav>
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" th:classappend="${bouquets.first} ? 'disabled' : ''">
+                                <a class="page-link" th:href="@{/home(page=${bouquets.number - 1})}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+
+                            <li th:each="page : ${#numbers.sequence(0, bouquets.totalPages - 1)}"
+                                class="page-item"
+                                th:classappend="${page == bouquets.number} ? 'active' : ''">
+                                <a class="page-link" th:href="@{/home(page=${page})}"
+                                   th:text="${page + 1}">1</a>
+                            </li>
+
+                            <li class="page-item" th:classappend="${bouquets.last} ? 'disabled' : ''">
+                                <a class="page-link" th:href="@{/home(page=${bouquets.number + 1})}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col text-center">
+                    <a th:href="@{/bouquets}" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-bouquet me-2"></i>Смотреть все букеты
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="bg-light py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 text-center mb-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-shipping-fast fa-3x text-primary"></i>
+                    </div>
+                    <h4>Быстрая доставка</h4>
+                    <p class="text-muted">Доставка цветов по городу в течение 2 часов</p>
+                </div>
+                <div class="col-lg-4 text-center mb-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-award fa-3x text-primary"></i>
+                    </div>
+                    <h4>Свежие цветы</h4>
+                    <p class="text-muted">Только свежие цветы от проверенных поставщиков</p>
+                </div>
+                <div class="col-lg-4 text-center mb-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-heart fa-3x text-primary"></i>
+                    </div>
+                    <h4>С любовью</h4>
+                    <p class="text-muted">Каждый букет собирается с заботой и вниманием</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+<script>
+    // Глобальные функции
+    async function addToCart(bouquetId) {
+        console.log('addToCart function called with bouquetId:', bouquetId);
+
+        try {
+            const requestData = {
+                bouquetId: parseInt(bouquetId),
+                quantity: 1
+            };
+
+            console.log('Request data:', requestData);
+
+            const response = await fetch('/api/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            console.log('Response status:', response.status);
+
+            if (response.status === 401) {
+                showAlert('Для добавления в корзину необходимо войти в систему', 'error');
+                return;
+            }
+
+            const result = await response.json();
+            console.log('Response data:', result);
+
+            if (result.success) {
+                showAlert('Букет добавлен в корзину!', 'success');
+                updateCartCounter();
+            } else {
+                showAlert('Ошибка: ' + result.message, 'error');
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            showAlert('Ошибка при добавлении в корзину: ' + error.message, 'error');
+        }
+    }
+
+    function showAlert(message, type) {
+        // ... код showAlert из предыдущего примера
+    }
+
+    async function updateCartCounter() {
+        // ... код updateCartCounter из предыдущего примера
+    }
+
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCartCounter();
+    });
+</script>
+</body>
+</html>

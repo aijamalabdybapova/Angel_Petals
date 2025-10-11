@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/header}">
+<head>
+    <title>Мои заказы - Цветочный магазин</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Page Header -->
+    <section class="py-4 bg-light">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="h2 mb-0">
+                        <i class="fas fa-shopping-bag me-2"></i>Мои заказы
+                    </h1>
+                    <p class="text-muted mb-0" sec:authorize="hasAnyRole('MANAGER', 'ADMIN')">
+                        Управление всеми заказами
+                    </p>
+                    <p class="text-muted mb-0" sec:authorize="hasRole('USER')">
+                        История ваших заказов
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Orders List -->
+    <section class="py-5">
+        <div class="container">
+            <!-- No Orders Message -->
+            <div class="row" th:if="${orders.empty}">
+                <div class="col text-center">
+                    <div class="alert alert-info py-5">
+                        <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+                        <h4>Заказы не найдены</h4>
+                        <p class="mb-3">У вас пока нет заказов</p>
+                        <a th:href="@{/bouquets}" class="btn btn-primary">
+                            <i class="fas fa-bouquet me-2"></i>Перейти к букетам
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="row" th:unless="${orders.empty}">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Номер заказа</th>
+                                        <th>Дата</th>
+                                        <th>Получатель</th>
+                                        <th>Сумма</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:each="order : ${orders.content}">
+                                        <td>
+                                            <strong th:text="${order.orderNumber}">ORD-123456</strong>
+                                        </td>
+                                        <td>
+                                            <small th:text="${#temporals.format(order.createdAt, 'dd.MM.yyyy HH:mm')}">
+                                                01.01.2024 12:00
+                                            </small>
+                                        </td>
+                                        <td th:text="${order.recipientName}">Иван Иванов</td>
+                                        <td>
+                                            <strong th:text="'₽' + ${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 2, 'POINT')}">
+                                                ₽2,500.00
+                                            </strong>
+                                        </td>
+                                        <td>
+                                            <!-- ★★★★ ИСПРАВЛЕННЫЙ СТАТУС - ИСПОЛЬЗУЕМ МЕТОДЫ ИЗ КОНТРОЛЛЕРА ★★★★ -->
+                                            <span th:class="'badge ' + ${@orderController.getStatusBadgeClass(order.status)}"
+                                                  th:text="${@orderController.getStatusText(order.status)}">
+                                                Ожидает
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a th:href="@{/orders/{id}(id=${order.id})}"
+                                                   class="btn btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <button th:if="${order.status?.name() == 'PENDING'}"
+                                                        class="btn btn-outline-danger"
+                                                        th:onclick="'cancelOrder(' + ${order.id} + ')'">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="row mt-4" th:if="${orders.totalPages > 1}">
+                <div class="col">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" th:classappend="${orders.first} ? 'disabled' : ''">
+                                <a class="page-link" th:href="@{/orders(page=0)}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item" th:classappend="${orders.first} ? 'disabled' : ''">
+                                <a class="page-link" th:href="@{/orders(page=${orders.number - 1})}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+
+                            <li th:each="page : ${#numbers.sequence(0, orders.totalPages - 1)}"
+                                class="page-item"
+                                th:classappend="${page == orders.number} ? 'active' : ''">
+                                <a class="page-link"
+                                   th:href="@{/orders(page=${page})}"
+                                   th:text="${page + 1}">1</a>
+                            </li>
+
+                            <li class="page-item" th:classappend="${orders.last} ? 'disabled' : ''">
+                                <a class="page-link" th:href="@{/orders(page=${orders.number + 1})}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item" th:classappend="${orders.last} ? 'disabled' : ''">
+                                <a class="page-link" th:href="@{/orders(page=${orders.totalPages - 1})}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    function cancelOrder(orderId) {
+        if (confirm('Вы уверены, что хотите отменить этот заказ?')) {
+            fetch('/api/orders/' + orderId + '/status?status=CANCELLED', {
+                method: 'PUT'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Заказ отменен успешно', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('Ошибка при отмене заказа', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Ошибка при отмене заказа', 'danger');
+            });
+        }
+    }
+
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+        alertDiv.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(alertDiv);
+
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 3000);
+    }
+</script>
+</body>
+</html>

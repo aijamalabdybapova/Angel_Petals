@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container">
+        <!-- Логотип и бренд -->
+        <a class="navbar-brand" th:href="@{/home}">
+            <i class="fas fa-spa text-primary me-2"></i>
+            Цветочный магазин
+        </a>
+
+        <!-- Кнопка для мобильных -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Основное меню -->
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/home}">
+                        <i class="fas fa-home me-1"></i>Главная
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/bouquets}">
+                        <i class="fas fa-bouquet me-1"></i>Букеты
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Правая часть навигации -->
+            <ul class="navbar-nav">
+                <!-- КОРЗИНА - ДОБАВЬТЕ ЗДЕСЬ -->
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/cart}">
+                        <i class="fas fa-shopping-cart me-1"></i>
+                        Корзина
+                        <span class="badge bg-primary" id="cartCounter">0</span>
+                    </a>
+                </li>
+
+                <!-- Для неавторизованных -->
+                <div sec:authorize="!isAuthenticated()" class="d-flex">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/login}">
+                            <i class="fas fa-sign-in-alt me-1"></i>Вход
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/register}">
+                            <i class="fas fa-user-plus me-1"></i>Регистрация
+                        </a>
+                    </li>
+                </div>
+
+                <!-- Для авторизованных -->
+                <div sec:authorize="isAuthenticated()" class="d-flex">
+                    <!-- Меню пользователя -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"
+                           data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>
+                            <span sec:authentication="name">Пользователь</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" th:href="@{/profile}">
+                                    <i class="fas fa-user me-2"></i>Профиль
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" th:href="@{/orders}">
+                                    <i class="fas fa-shopping-bag me-2"></i>Мои заказы
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Для менеджеров и админов -->
+                            <div sec:authorize="hasAnyRole('MANAGER', 'ADMIN')">
+                                <li>
+                                    <a class="dropdown-item" th:href="@{/bouquets/manage}">
+                                        <i class="fas fa-cog me-2"></i>Управление букетами
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" th:href="@{/orders}">
+                                        <i class="fas fa-clipboard-list me-2"></i>Все заказы
+                                    </a>
+                                </li>
+                            </div>
+
+                            <!-- Только для админов -->
+                            <div sec:authorize="hasRole('ADMIN')">
+                                <li>
+                                    <a class="dropdown-item" th:href="@{/admin/dashboard}">
+                                        <i class="fas fa-tachometer-alt me-2"></i>Админ панель
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" th:href="@{/admin/users}">
+                                        <i class="fas fa-users me-2"></i>Пользователи
+                                    </a>
+                                </li>
+                            </div>
+
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/logout}" method="post" class="d-inline">
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </div>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<style>
+    .navbar {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95) !important;
+    }
+
+    .nav-link {
+        font-weight: 500;
+        color: #333 !important;
+        transition: color 0.3s ease;
+        position: relative;
+        padding: 0.5rem 1rem !important;
+        border-radius: 8px;
+        margin: 0 2px;
+    }
+
+    .nav-link:hover {
+        color: var(--primary-color) !important;
+        background-color: rgba(233, 30, 99, 0.1);
+    }
+
+    .nav-link.active {
+        color: var(--primary-color) !important;
+        background-color: rgba(233, 30, 99, 0.1);
+    }
+
+    .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60%;
+        height: 2px;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        border-radius: 1px;
+    }
+
+    .dropdown-menu {
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        padding: 0.5rem;
+    }
+
+    .dropdown-item {
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .dropdown-item:hover {
+        background-color: rgba(233, 30, 99, 0.1);
+        color: var(--primary-color);
+    }
+
+    .cart-counter {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .nav-link {
+            margin: 2px 0;
+        }
+
+        .dropdown-menu {
+            border: none;
+            box-shadow: none;
+        }
+    }
+</style>
+
+<script>
+    // Update cart counter on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCartCounter();
+    });
+
+    function updateCartCounter() {
+        const cart = JSON.parse(localStorage.getItem('flowerShopCart')) || [];
+        const count = cart.reduce((total, item) => total + item.quantity, 0);
+        const counters = document.querySelectorAll('.cart-counter');
+
+        counters.forEach(counter => {
+            counter.textContent = count;
+            counter.style.display = count > 0 ? 'inline' : 'none';
+        });
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCartCounter();
+    });
+
+    async function updateCartCounter() {
+        try {
+            const response = await fetch('/flowershop/api/cart/count');
+            const result = await response.json();
+
+            if (result.success) {
+                document.getElementById('cartCounter').textContent = result.data;
+            }
+        } catch (error) {
+            console.error('Error updating cart counter:', error);
+        }
+    }
+</script>
+</body>
+</html>

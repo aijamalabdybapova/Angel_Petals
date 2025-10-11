@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/header}">
+<head>
+    <title th:text="${bouquet.name} + ' - Цветочный магазин'">Букет - Цветочный магазин</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="py-3">
+        <div class="container">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/home}">Главная</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/bouquets}">Букеты</a></li>
+                <li class="breadcrumb-item active" th:text="${bouquet.name}">Название букета</li>
+            </ol>
+        </div>
+    </nav>
+
+    <!-- Product Details -->
+    <section class="py-4">
+        <div class="container">
+            <div class="row">
+                <!-- Product Images -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card border-0">
+                        <img th:src="${bouquet.imageUrl != null} ?
+                                @{'/uploads/' + ${bouquet.imageUrl}} :
+                                @{/images/default-bouquet.jpg}"
+                             class="card-img rounded-3 shadow"
+                             th:alt="${bouquet.name}"
+                             style="max-height: 500px; object-fit: cover;">
+                    </div>
+                </div>
+
+                <!-- Product Info -->
+                <div class="col-lg-6">
+                    <div class="ps-lg-4">
+                        <!-- Stock Status -->
+                        <div class="mb-3">
+                                <span th:if="${bouquet.inStock}" class="badge bg-success fs-6">
+                                    <i class="fas fa-check me-2"></i>В наличии
+                                </span>
+                            <span th:unless="${bouquet.inStock}" class="badge bg-danger fs-6">
+                                    <i class="fas fa-times me-2"></i>Нет в наличии
+                                </span>
+                        </div>
+
+                        <!-- Product Name -->
+                        <h1 class="h2 mb-3" th:text="${bouquet.name}">Название букета</h1>
+
+                        <!-- Category -->
+                        <div class="mb-3">
+                                <span class="text-muted">
+                                    <i class="fas fa-tag me-2"></i>
+                                    Категория:
+                                    <a th:if="${bouquet.category != null}"
+                                       th:href="@{/bouquets(categoryId=${bouquet.category.id})}"
+                                       class="text-primary text-decoration-none">
+                                        <span th:text="${bouquet.category.name}"></span>
+                                    </a>
+                                    <span th:unless="${bouquet.category != null}">Не указана</span>
+                                </span>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="mb-4">
+                                <span class="h1 text-primary"
+                                      th:text="'₽' + ${#numbers.formatDecimal(bouquet.price, 0, 'COMMA', 2, 'POINT')}">
+                                    2500
+                                </span>
+                            <small class="text-muted d-block" th:if="${bouquet.stockQuantity > 0}">
+                                Осталось в наличии: <span th:text="${bouquet.stockQuantity}"></span> шт.
+                            </small>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Описание</h5>
+                            <p class="text-muted" th:text="${bouquet.description ?: 'Описание отсутствует'}">
+                                Описание букета...
+                            </p>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-auto">
+                                <div class="input-group" style="width: 140px;">
+                                    <button class="btn btn-outline-primary" type="button" id="decreaseQty">-</button>
+                                    <input type="number" class="form-control text-center"
+                                           id="quantity" value="1" min="1"
+                                           th:max="${bouquet.stockQuantity}">
+                                    <button class="btn btn-outline-primary" type="button" id="increaseQty">+</button>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <button th:if="${bouquet.inStock}"
+                                        class="btn btn-primary btn-lg w-100"
+                                        id="addToCartBtn">
+                                    <i class="fas fa-cart-plus me-2"></i>Добавить в корзину
+                                </button>
+                                <button th:unless="${bouquet.inStock}"
+                                        class="btn btn-secondary btn-lg w-100" disabled>
+                                    <i class="fas fa-cart-plus me-2"></i>Нет в наличии
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Additional Info -->
+                        <div class="border-top pt-4">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <i class="fas fa-shipping-fast fa-2x text-primary mb-2"></i>
+                                    <h6>Быстрая доставка</h6>
+                                    <small class="text-muted">За 2 часа по городу</small>
+                                </div>
+                                <div class="col-4">
+                                    <i class="fas fa-award fa-2x text-primary mb-2"></i>
+                                    <h6>Гарантия качества</h6>
+                                    <small class="text-muted">Свежие цветы</small>
+                                </div>
+                                <div class="col-4">
+                                    <i class="fas fa-phone fa-2x text-primary mb-2"></i>
+                                    <h6>Поддержка</h6>
+                                    <small class="text-muted">24/7 консультация</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Actions -->
+            <div class="row mt-5" sec:authorize="hasAnyRole('MANAGER', 'ADMIN')">
+                <div class="col-12">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-cog me-2"></i>Управление букетом
+                            </h5>
+                            <div class="btn-group">
+                                <a th:href="@{/bouquets/edit/{id}(id=${bouquet.id})}"
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-edit me-2"></i>Редактировать
+                                </a>
+                                <form th:action="@{/bouquets/delete/{id}(id=${bouquet.id})}"
+                                      method="post"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Вы уверены, что хотите удалить этот букет?')">
+                                    <button type="submit" class="btn btn-outline-danger ms-2">
+                                        <i class="fas fa-trash me-2"></i>Удалить
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const quantityInput = document.getElementById('quantity');
+        const decreaseBtn = document.getElementById('decreaseQty');
+        const increaseBtn = document.getElementById('increaseQty');
+        const addToCartBtn = document.getElementById('addToCartBtn');
+
+        // Quantity controls
+        decreaseBtn.addEventListener('click', function() {
+            let currentValue = parseInt(quantityInput.value);
+            if (currentValue > 1) {
+                quantityInput.value = currentValue - 1;
+            }
+        });
+
+        increaseBtn.addEventListener('click', function() {
+            let currentValue = parseInt(quantityInput.value);
+            const maxValue = parseInt(quantityInput.getAttribute('max')) || 99;
+            if (currentValue < maxValue) {
+                quantityInput.value = currentValue + 1;
+            }
+        });
+
+        // Add to cart
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', function() {
+                const bouquetId = [[${bouquet.id}]];
+                const quantity = parseInt(quantityInput.value);
+
+                addToCart(bouquetId, quantity);
+            });
+        }
+
+        function addToCart(bouquetId, quantity) {
+            fetch(`/api/cart/add?bouquetId=${bouquetId}&quantity=${quantity}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(`Букет добавлен в корзину (${quantity} шт.)!`, 'success');
+                    updateCartCounter(quantity);
+                } else {
+                    showAlert('Ошибка при добавлении в корзину', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Ошибка при добавлении в корзину', 'danger');
+            });
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(alertDiv);
+
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 3000);
+        }
+
+        function updateCartCounter(quantity) {
+            // Update cart counter in navbar
+            const cartCounter = document.getElementById('cartCounter');
+            if (cartCounter) {
+                const currentCount = parseInt(cartCounter.textContent) || 0;
+                cartCounter.textContent = currentCount + quantity;
+            }
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/header}">
+<head>
+    <title>Доступ запрещен - Цветочный магазин</title>
+    <style>
+        .error-container {
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .error-card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .error-icon {
+            font-size: 4rem;
+            color: #dc3545;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="error-container py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="card error-card">
+                        <div class="card-body text-center p-5">
+                            <!-- Error Icon -->
+                            <div class="error-icon">
+                                <i class="fas fa-ban"></i>
+                            </div>
+
+                            <!-- Error Message -->
+                            <h1 class="display-4 fw-bold text-danger mb-3">403</h1>
+                            <h2 class="h3 mb-4">Доступ запрещен</h2>
+
+                            <p class="text-muted mb-4">
+                                Извините, у вас недостаточно прав для доступа к этой странице.
+                                Если вы считаете, что это ошибка, обратитесь к администратору.
+                            </p>
+
+                            <!-- User Information -->
+                            <div class="alert alert-info mb-4" sec:authorize="isAuthenticated()">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-user-circle me-3 fa-2x"></i>
+                                    <div>
+                                        <strong>Текущий пользователь:</strong>
+                                        <div class="text-muted" sec:authentication="name"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-center">
+                                <a th:href="@{/home}" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-home me-2"></i>На главную
+                                </a>
+                                <a th:href="@{/bouquets}" class="btn btn-outline-primary btn-lg">
+                                    <i class="fas fa-bouquet me-2"></i>К букетам
+                                </a>
+                                <form th:action="@{/logout}" method="post" class="d-inline" sec:authorize="isAuthenticated()">
+                                    <button type="submit" class="btn btn-outline-secondary btn-lg">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Additional Help -->
+                            <div class="mt-5 pt-4 border-top">
+                                <h5 class="mb-3">Нужна помощь?</h5>
+                                <div class="row text-center">
+                                    <div class="col-md-4 mb-3">
+                                        <i class="fas fa-phone fa-2x text-primary mb-2"></i>
+                                        <h6>Позвоните нам</h6>
+                                        <small class="text-muted">+7 (999) 123-45-67</small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <i class="fas fa-envelope fa-2x text-primary mb-2"></i>
+                                        <h6>Напишите нам</h6>
+                                        <small class="text-muted">support@flowershop.ru</small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <i class="fas fa-clock fa-2x text-primary mb-2"></i>
+                                        <h6>Время работы</h6>
+                                        <small class="text-muted">9:00 - 21:00</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Debug Information (for development) -->
+                            <div class="mt-4" sec:authorize="hasRole('ADMIN')">
+                                <details>
+                                    <summary class="text-muted cursor-pointer">
+                                        <small>Информация для администратора</small>
+                                    </summary>
+                                    <div class="mt-2 p-3 bg-light rounded">
+                                        <small class="text-muted">
+                                            <strong>Требуемые права:</strong> Доступ к этой странице требует определенных привилегий.<br>
+                                            <strong>Текущий пользователь:</strong> <span sec:authentication="name"></span><br>
+                                            <strong>Роли:</strong>
+                                            <span sec:authentication="principal.authorities"></span>
+                                        </small>
+                                    </div>
+                                </details>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .cursor-pointer {
+        cursor: pointer;
+    }
+
+    details summary {
+        list-style: none;
+    }
+
+    details summary::-webkit-details-marker {
+        display: none;
+    }
+
+    details summary:before {
+        content: '▶';
+        display: inline-block;
+        margin-right: 8px;
+        transition: transform 0.3s ease;
+    }
+
+    details[open] summary:before {
+        transform: rotate(90deg);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add smooth animation
+        const errorCard = document.querySelector('.error-card');
+        if (errorCard) {
+            errorCard.style.transform = 'translateY(20px)';
+            errorCard.style.opacity = '0';
+
+            setTimeout(() => {
+                errorCard.style.transition = 'all 0.5s ease';
+                errorCard.style.transform = 'translateY(0)';
+                errorCard.style.opacity = '1';
+            }, 100);
+        }
+
+        // Auto-redirect after 10 seconds
+        setTimeout(() => {
+            window.location.href = '/flowershop/home';
+        }, 10000);
+    });
+</script>
+</body>
+</html>

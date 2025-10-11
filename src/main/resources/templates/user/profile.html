@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{fragments/header}">
+<head>
+    <title>Мой профиль - Цветочный магазин</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="py-3">
+        <div class="container">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/home}">Главная</a></li>
+                <li class="breadcrumb-item active">Мой профиль</li>
+            </ol>
+        </div>
+    </nav>
+
+    <!-- Profile Section -->
+    <section class="py-4">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">
+                                <i class="fas fa-user me-2"></i>Мой профиль
+                            </h4>
+                        </div>
+                        <div class="card-body p-4">
+                            <!-- Success Message -->
+                            <div th:if="${successMessage}" class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <span th:text="${successMessage}"></span>
+                            </div>
+
+                            <!-- User Info -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="border-bottom pb-2 mb-3">
+                                        <i class="fas fa-info-circle me-2"></i>Основная информация
+                                    </h5>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">Имя пользователя</label>
+                                    <p class="h6" th:text="${user.username}">username</p>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">Email</label>
+                                    <p class="h6" th:text="${user.email}">user@example.com</p>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">Имя</label>
+                                    <p class="h6" th:text="${user.firstName}">Иван</p>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">Фамилия</label>
+                                    <p class="h6" th:text="${user.lastName}">Иванов</p>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">Телефон</label>
+                                    <p class="h6" th:text="${user.phoneNumber ?: 'Не указан'}">+7 (999) 123-45-67</p>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">Роль</label>
+                                    <p>
+                                            <span th:each="role : ${user.roles}"
+                                                  th:classappend="'badge bg-' + ${getRoleBadgeClass(role.name)}"
+                                                  th:text="${getRoleText(role.name)}"
+                                                  class="badge me-1">
+                                                USER
+                                            </span>
+                                    </p>
+                                </div>
+
+                                <div class="col-12 mb-3">
+                                    <label class="form-label text-muted">Адрес</label>
+                                    <p class="h6" th:text="${user.address ?: 'Не указан'}">г. Москва, ул. Примерная, д. 1</p>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">Дата регистрации</label>
+                                    <p class="h6" th:text="${#temporals.format(user.createdAt, 'dd.MM.yyyy')}">01.01.2024</p>
+                                </div>
+                            </div>
+
+                            <!-- Statistics -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="border-bottom pb-2 mb-3">
+                                        <i class="fas fa-chart-bar me-2"></i>Статистика
+                                    </h5>
+                                </div>
+
+                                <div class="col-md-4 text-center mb-3">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h3 class="text-primary" th:text="${orderCount}">0</h3>
+                                            <p class="text-muted mb-0">Всего заказов</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4 text-center mb-3">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h3 class="text-success" th:text="${completedOrders}">0</h3>
+                                            <p class="text-muted mb-0">Завершенных</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4 text-center mb-3">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h3 class="text-warning" th:text="${pendingOrders}">0</h3>
+                                            <p class="text-muted mb-0">Ожидают</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <a th:href="@{/orders}" class="btn btn-outline-primary">
+                                            <i class="fas fa-shopping-bag me-2"></i>Мои заказы
+                                        </a>
+                                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                                            <i class="fas fa-edit me-2"></i>Редактировать профиль
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>Редактирование профиля
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form th:action="@{/profile/update}" method="post">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="firstName" class="form-label">Имя</label>
+                                <input type="text" class="form-control" id="firstName" name="firstName"
+                                       th:value="${user.firstName}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="lastName" class="form-label">Фамилия</label>
+                                <input type="text" class="form-control" id="lastName" name="lastName"
+                                       th:value="${user.lastName}" required>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                       th:value="${user.email}" required>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label for="phoneNumber" class="form-label">Телефон</label>
+                                <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber"
+                                       th:value="${user.phoneNumber}">
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label for="address" class="form-label">Адрес</label>
+                                <textarea class="form-control" id="address" name="address"
+                                          rows="3" th:text="${user.address}"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    function getRoleBadgeClass(role) {
+        switch (role) {
+            case 'ROLE_ADMIN': return 'danger';
+            case 'ROLE_MANAGER': return 'warning';
+            case 'ROLE_USER': return 'primary';
+            default: return 'secondary';
+        }
+    }
+
+    function getRoleText(role) {
+        switch (role) {
+            case 'ROLE_ADMIN': return 'Админ';
+            case 'ROLE_MANAGER': return 'Менеджер';
+            case 'ROLE_USER': return 'Пользователь';
+            default: return role;
+        }
+    }
+    /*]]>*/
+</script>
+</body>
+</html>

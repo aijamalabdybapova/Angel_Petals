@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Footer -->
+<footer class="bg-dark text-white mt-5">
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-lg-4 mb-4">
+                <h5 class="text-primary mb-3">
+                    <i class="fas fa-spa me-2"></i>Цветочный магазин "Букет Счастья"
+                </h5>
+                <p class="text-light">Дарим радость и эмоции через прекрасные цветы. Создаем уникальные букеты для ваших особенных моментов.</p>
+                <div class="social-links">
+                    <a href="#" class="text-white me-3" title="ВКонтакте">
+                        <i class="fab fa-vk fa-lg"></i>
+                    </a>
+                    <a href="#" class="text-white me-3" title="Instagram">
+                        <i class="fab fa-instagram fa-lg"></i>
+                    </a>
+                    <a href="#" class="text-white me-3" title="Telegram">
+                        <i class="fab fa-telegram fa-lg"></i>
+                    </a>
+                    <a href="#" class="text-white" title="WhatsApp">
+                        <i class="fab fa-whatsapp fa-lg"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-6 mb-4">
+                <h6 class="text-primary mb-3">Магазин</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <a th:href="@{/bouquets}" class="text-light text-decoration-none">Все букеты</a>
+                    </li>
+                    <li class="mb-2">
+                        <a th:href="@{/bouquets}" class="text-light text-decoration-none">Новинки</a>
+                    </li>
+                    <li class="mb-2">
+                        <a th:href="@{/bouquets}" class="text-light text-decoration-none">Популярные</a>
+                    </li>
+                    <li class="mb-2">
+                        <a th:href="@{/bouquets}" class="text-light text-decoration-none">Акции</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="col-lg-2 col-md-6 mb-4">
+                <h6 class="text-primary mb-3">Помощь</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <a th:href="@{/delivery}" class="text-light text-decoration-none">Доставка и оплата</a>
+                    </li>
+                    <li class="mb-2">
+                        <a th:href="@{/contacts}" class="text-light text-decoration-none">Контакты</a>
+                    </li>
+                    <li class="mb-2">
+                        <a th:href="@{/faq}" class="text-light text-decoration-none">FAQ</a>
+                    </li>
+                    <li class="mb-2">
+                        <a th:href="@{/returns}" class="text-light text-decoration-none">Возврат</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="col-lg-4 mb-4">
+                <h6 class="text-primary mb-3">Контакты</h6>
+                <div class="mb-3">
+                    <p class="mb-1">
+                        <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                        г. Москва, ул. Цветочная, д. 15
+                    </p>
+                    <p class="mb-1">
+                        <i class="fas fa-phone me-2 text-primary"></i>
+                        <a href="tel:+79991234567" class="text-light text-decoration-none">+7 (999) 123-45-67</a>
+                    </p>
+                    <p class="mb-1">
+                        <i class="fas fa-envelope me-2 text-primary"></i>
+                        <a href="mailto:info@bouquet-happiness.ru" class="text-light text-decoration-none">info@bouquet-happiness.ru</a>
+                    </p>
+                </div>
+
+                <div class="mb-3">
+                    <h6 class="text-primary mb-2">Время работы</h6>
+                    <p class="mb-1 text-light">Пн-Пт: 9:00 - 21:00</p>
+                    <p class="mb-1 text-light">Сб-Вс: 10:00 - 20:00</p>
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-4 bg-light">
+
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <p class="mb-0 text-light">
+                    &copy; 2024 Цветочный магазин "Букет Счастья". Все права защищены.
+                </p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <div class="payment-methods">
+                    <span class="text-light me-2">Принимаем к оплате:</span>
+                    <i class="fab fa-cc-visa text-light me-2" title="Visa"></i>
+                    <i class="fab fa-cc-mastercard text-light me-2" title="MasterCard"></i>
+                    <i class="fab fa-cc-mir text-light me-2" title="Мир"></i>
+                    <i class="fas fa-mobile-alt text-light" title="Онлайн-оплата"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+    .social-links a {
+        transition: transform 0.3s ease, color 0.3s ease;
+    }
+
+    .social-links a:hover {
+        transform: translateY(-2px);
+        color: var(--primary-color) !important;
+    }
+
+    .payment-methods i {
+        font-size: 1.5rem;
+    }
+
+    footer a:hover {
+        color: var(--primary-color) !important;
+    }
+</style>
+</body>
+</html>

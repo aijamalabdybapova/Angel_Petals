@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/header}">
+<head>
+    <title>Статистика - Админ панель</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Page Header -->
+    <section class="py-4 bg-light">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="h2 mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Статистика
+                    </h1>
+                    <p class="text-muted mb-0">Аналитика и отчеты по магазину</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary" id="refreshStats">
+                            <i class="fas fa-sync-alt me-2"></i>Обновить
+                        </button>
+                        <button class="btn btn-outline-success" id="exportStats">
+                            <i class="fas fa-download me-2"></i>Экспорт
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Date Range Filter -->
+    <section class="py-3 border-bottom">
+        <div class="container">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-3">
+                    <label for="startDate" class="form-label">Начальная дата</label>
+                    <input type="date" class="form-control" id="startDate">
+                </div>
+                <div class="col-md-3">
+                    <label for="endDate" class="form-label">Конечная дата</label>
+                    <input type="date" class="form-control" id="endDate">
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary mt-4 w-100" id="applyDateRange">
+                        <i class="fas fa-filter me-2"></i>Применить
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-secondary mt-4 w-100" id="resetDateRange">
+                        <i class="fas fa-redo me-2"></i>Сбросить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics Cards -->
+    <section class="py-4">
+        <div class="container">
+            <div class="row g-4">
+                <!-- Total Revenue -->
+                <div class="col-md-3">
+                    <div class="card border-0 bg-success text-white shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h4 class="mb-0" id="totalRevenue">₽0</h4>
+                                    <p class="mb-0">Общая выручка</p>
+                                </div>
+                                <div class="icon-circle">
+                                    <i class="fas fa-money-bill-wave fa-2x"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small>
+                                    <i class="fas fa-arrow-up me-1"></i>
+                                    <span id="revenueChange">0%</span> за период
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Orders -->
+                <div class="col-md-3">
+                    <div class="card border-0 bg-primary text-white shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h4 class="mb-0" id="totalOrders">0</h4>
+                                    <p class="mb-0">Всего заказов</p>
+                                </div>
+                                <div class="icon-circle">
+                                    <i class="fas fa-shopping-bag fa-2x"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small>
+                                    <i class="fas fa-arrow-up me-1"></i>
+                                    <span id="ordersChange">0%</span> за период
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Users -->
+                <div class="col-md-3">
+                    <div class="card border-0 bg-info text-white shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h4 class="mb-0" id="activeUsers">0</h4>
+                                    <p class="mb-0">Активных пользователей</p>
+                                </div>
+                                <div class="icon-circle">
+                                    <i class="fas fa-users fa-2x"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small>
+                                    <i class="fas fa-arrow-up me-1"></i>
+                                    <span id="usersChange">0%</span> за период
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Average Order Value -->
+                <div class="col-md-3">
+                    <div class="card border-0 bg-warning text-white shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h4 class="mb-0" id="avgOrderValue">₽0</h4>
+                                    <p class="mb-0">Средний чек</p>
+                                </div>
+                                <div class="icon-circle">
+                                    <i class="fas fa-chart-line fa-2x"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small>
+                                    <i class="fas fa-arrow-up me-1"></i>
+                                    <span id="avgOrderChange">0%</span> за период
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Charts and Detailed Statistics -->
+    <section class="py-4">
+        <div class="container">
+            <div class="row g-4">
+                <!-- Revenue Chart -->
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-line me-2"></i>Динамика выручки
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" style="height: 300px;">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Status Distribution -->
+                <div class="col-lg-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-pie me-2"></i>Статусы заказов
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" style="height: 300px;">
+                                <canvas id="orderStatusChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Popular Bouquets -->
+                <div class="col-lg-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-star me-2"></i>Популярные букеты
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                    <tr>
+                                        <th>Букет</th>
+                                        <th class="text-end">Количество</th>
+                                        <th class="text-end">Выручка</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="popularBouquets">
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted py-3">
+                                            Загрузка данных...
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Activity -->
+                <div class="col-lg-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user-clock me-2"></i>Активность пользователей
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                    <tr>
+                                        <th>Пользователь</th>
+                                        <th class="text-end">Заказов</th>
+                                        <th class="text-end">Сумма</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="userActivity">
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted py-3">
+                                            Загрузка данных...
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize date range (last 30 days)
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 30);
+
+        document.getElementById('startDate').valueAsDate = startDate;
+        document.getElementById('endDate').valueAsDate = endDate;
+
+        // Load statistics
+        loadStatistics();
+
+        // Event listeners
+        document.getElementById('applyDateRange').addEventListener('click', loadStatistics);
+        document.getElementById('resetDateRange').addEventListener('click', resetDateRange);
+        document.getElementById('refreshStats').addEventListener('click', loadStatistics);
+        document.getElementById('exportStats').addEventListener('click', exportStatistics);
+
+        function loadStatistics() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            // Simulate API call to get statistics
+            simulateStatisticsData(startDate, endDate);
+        }
+
+        function resetDateRange() {
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 30);
+
+            document.getElementById('startDate').valueAsDate = startDate;
+            document.getElementById('endDate').valueAsDate = endDate;
+
+            loadStatistics();
+        }
+
+        function simulateStatisticsData(startDate, endDate) {
+            // Simulate data - in real application, this would come from API
+            const stats = {
+                totalRevenue: 125000,
+                revenueChange: 12.5,
+                totalOrders: 89,
+                ordersChange: 8.3,
+                activeUsers: 156,
+                usersChange: 15.2,
+                avgOrderValue: 1404,
+                avgOrderChange: 3.8
+            };
+
+            // Update cards
+            document.getElementById('totalRevenue').textContent = `₽${stats.totalRevenue.toLocaleString()}`;
+            document.getElementById('revenueChange').textContent = `${stats.revenueChange}%`;
+            document.getElementById('totalOrders').textContent = stats.totalOrders;
+            document.getElementById('ordersChange').textContent = `${stats.ordersChange}%`;
+            document.getElementById('activeUsers').textContent = stats.activeUsers;
+            document.getElementById('usersChange').textContent = `${stats.usersChange}%`;
+            document.getElementById('avgOrderValue').textContent = `₽${stats.avgOrderValue}`;
+            document.getElementById('avgOrderChange').textContent = `${stats.avgOrderChange}%`;
+
+            // Initialize charts
+            initializeCharts();
+
+            // Load tables
+            loadPopularBouquets();
+            loadUserActivity();
+        }
+
+        function initializeCharts() {
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
+                    datasets: [{
+                        label: 'Выручка',
+                        data: [85000, 92000, 78000, 110000, 125000, 140000],
+                        borderColor: '#e91e63',
+                        backgroundColor: 'rgba(233, 30, 99, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Order Status Chart
+            const statusCtx = document.getElementById('orderStatusChart').getContext('2d');
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Завершены', 'В процессе', 'Ожидают', 'Отменены'],
+                    datasets: [{
+                        data: [65, 15, 12, 8],
+                        backgroundColor: [
+                            '#28a745',
+                            '#17a2b8',
+                            '#ffc107',
+                            '#dc3545'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function loadPopularBouquets() {
+            const popularBouquets = [
+                { name: 'Нежная роза', quantity: 25, revenue: 87500 },
+                { name: 'Свадебный шик', quantity: 18, revenue: 99000 },
+                { name: 'Весенняя свежесть', quantity: 32, revenue: 89600 },
+                { name: 'Романтический микс', quantity: 15, revenue: 63000 },
+                { name: 'Осенняя гармония', quantity: 12, revenue: 38400 }
+            ];
+
+            const tbody = document.getElementById('popularBouquets');
+            tbody.innerHTML = popularBouquets.map(bouquet => `
+                <tr>
+                    <td>${bouquet.name}</td>
+                    <td class="text-end">${bouquet.quantity}</td>
+                    <td class="text-end">₽${bouquet.revenue.toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        function loadUserActivity() {
+            const userActivity = [
+                { name: 'Иван Иванов', orders: 8, total: 28500 },
+                { name: 'Мария Петрова', orders: 6, total: 22400 },
+                { name: 'Сергей Сидоров', orders: 5, total: 19500 },
+                { name: 'Анна Ковалева', orders: 4, total: 16800 },
+                { name: 'Дмитрий Волков', orders: 3, total: 12600 }
+            ];
+
+            const tbody = document.getElementById('userActivity');
+            tbody.innerHTML = userActivity.map(user => `
+                <tr>
+                    <td>${user.name}</td>
+                    <td class="text-end">${user.orders}</td>
+                    <td class="text-end">₽${user.total.toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        function exportStatistics() {
+            // In real application, this would generate and download a report
+            alert('Функция экспорта статистики будет реализована в следующей версии');
+        }
+    });
+</script>
+
+<style>
+    .icon-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .chart-container {
+        position: relative;
+    }
+</style>
+</body>
+</html>

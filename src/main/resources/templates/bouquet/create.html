@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/header}">
+<head>
+    <title>Добавить букет - Цветочный магазин</title>
+    <style>
+        .image-preview {
+            max-width: 300px;
+            max-height: 300px;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            display: none;
+        }
+        .image-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="py-3">
+        <div class="container">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/home}">Главная</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/bouquets}">Букеты</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/bouquets/manage}">Управление</a></li>
+                <li class="breadcrumb-item active">Добавить букет</li>
+            </ol>
+        </div>
+    </nav>
+
+    <!-- Create Form -->
+    <section class="py-4">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">
+                                <i class="fas fa-plus me-2"></i>Добавить новый букет
+                            </h4>
+                        </div>
+                        <div class="card-body p-4">
+                            <!-- Success/Error Messages -->
+                            <div th:if="${successMessage}" class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <span th:text="${successMessage}"></span>
+                            </div>
+                            <div th:if="${errorMessage}" class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                <span th:text="${errorMessage}"></span>
+                            </div>
+
+                            <form th:action="@{/bouquets/create}" th:object="${bouquet}" method="post" enctype="multipart/form-data">
+                                <!-- Basic Information -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h5 class="border-bottom pb-2 mb-3">
+                                            <i class="fas fa-info-circle me-2"></i>Основная информация
+                                        </h5>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="name" class="form-label required">Название букета</label>
+                                        <input type="text" class="form-control" id="name"
+                                               th:field="*{name}"
+                                               placeholder="Введите название букета" required>
+                                        <div class="text-danger" th:if="${#fields.hasErrors('name')}">
+                                            <small th:errors="*{name}"></small>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="categoryId" class="form-label required">Категория</label>
+                                        <select class="form-select" id="categoryId"
+                                                th:field="*{categoryId}" required>
+                                            <option value="">Выберите категорию</option>
+                                            <option th:each="category : ${categories}"
+                                                    th:value="${category.id}"
+                                                    th:text="${category.name}">
+                                            </option>
+                                        </select>
+                                        <div class="text-danger" th:if="${#fields.hasErrors('categoryId')}">
+                                            <small th:errors="*{categoryId}"></small>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 mb-3">
+                                        <label for="description" class="form-label">Описание</label>
+                                        <textarea class="form-control" id="description"
+                                                  th:field="*{description}"
+                                                  placeholder="Опишите букет..."
+                                                  rows="4"></textarea>
+                                        <div class="text-danger" th:if="${#fields.hasErrors('description')}">
+                                            <small th:errors="*{description}"></small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Pricing and Stock -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h5 class="border-bottom pb-2 mb-3">
+                                            <i class="fas fa-tag me-2"></i>Цена и наличие
+                                        </h5>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="price" class="form-label required">Цена (₽)</label>
+                                        <input type="number" class="form-control" id="price"
+                                               th:field="*{price}"
+                                               placeholder="0.00"
+                                               step="0.01"
+                                               min="0.01"
+                                               required>
+                                        <div class="text-danger" th:if="${#fields.hasErrors('price')}">
+                                            <small th:errors="*{price}"></small>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="stockQuantity" class="form-label">Количество в наличии</label>
+                                        <input type="number" class="form-control" id="stockQuantity"
+                                               th:field="*{stockQuantity}"
+                                               placeholder="0"
+                                               min="0">
+                                    </div>
+
+                                    <div class="col-12 mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox"
+                                                   id="inStock" th:field="*{inStock}">
+                                            <label class="form-check-label" for="inStock">
+                                                В наличии
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Image Upload -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h5 class="border-bottom pb-2 mb-3">
+                                            <i class="fas fa-image me-2"></i>Изображение букета
+                                        </h5>
+                                    </div>
+
+                                    <div class="col-12 mb-3">
+                                        <label for="imageFile" class="form-label">Изображение</label>
+                                        <input type="file" class="form-control" id="imageFile"
+                                               name="imageFile"
+                                               accept="image/*"
+                                               onchange="previewImage(this)">
+                                        <div class="form-text">
+                                            Рекомендуемый размер: 800x600px. Поддерживаемые форматы: JPG, PNG, GIF.
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <div class="image-preview mt-3" id="imagePreview">
+                                            <img id="previewImage" src="#" alt="Предпросмотр">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="d-flex gap-2 justify-content-end">
+                                            <a th:href="@{/bouquets/manage}" class="btn btn-outline-secondary">
+                                                <i class="fas fa-arrow-left me-2"></i>Назад
+                                            </a>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-save me-2"></i>Сохранить букет
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    function previewImage(input) {
+        const preview = document.getElementById('imagePreview');
+        const img = document.getElementById('previewImage');
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                preview.style.display = 'block';
+            }
+
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+
+    // Auto-toggle inStock based on stockQuantity
+    document.getElementById('stockQuantity').addEventListener('input', function() {
+        const inStockCheckbox = document.getElementById('inStock');
+        const stockQuantity = parseInt(this.value) || 0;
+
+        if (stockQuantity > 0) {
+            inStockCheckbox.checked = true;
+        } else {
+            inStockCheckbox.checked = false;
+        }
+    });
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const price = document.getElementById('price').value;
+        if (price && parseFloat(price) <= 0) {
+            e.preventDefault();
+            alert('Цена должна быть больше 0');
+            return false;
+        }
+    });
+</script>
+</body>
+</html>
