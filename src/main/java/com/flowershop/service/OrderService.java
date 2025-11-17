@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface OrderService {
 
@@ -28,4 +29,8 @@ public interface OrderService {
     List<Order> searchOrders(String search);
     void updateOrderStatus(Long orderId, Order.OrderStatus status);
     Long countByStatus(Order.OrderStatus status);
+    Order createOrderFromCart(Long userId, OrderDto orderDto);
+    Order createOrderWithTransaction(OrderDto orderDto);
+    Optional<Order> findByIdWithItems(Long id);
+    void cancelOrder(Long orderId);
 }

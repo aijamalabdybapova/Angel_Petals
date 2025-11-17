@@ -25,4 +25,11 @@ public interface UserService extends UserDetailsService {
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
     void changeUserRole(Long userId, String roleName);
+    Page<User> findBySearch(String search, Pageable pageable);
+    Page<User> findByRole(String role, Pageable pageable);
+
+    User saveWithEncryption(UserRegistrationDto registrationDto);
+    User updateUserWithEncryption(Long id, User user);
+    String getMaskedPhone(Long userId);
+    String getMaskedEmail(Long userId);
 }

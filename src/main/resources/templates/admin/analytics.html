@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/header}">
+<head>
+    <title>Аналитика - Админ панель</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Page Header -->
+    <section class="py-4 bg-light">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="h2 mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Аналитика и отчеты
+                    </h1>
+                    <p class="text-muted mb-0">Детальная статистика и аналитика магазина</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary" id="refreshAnalytics">
+                            <i class="fas fa-sync-alt me-2"></i>Обновить
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-success dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown">
+                                <i class="fas fa-download me-2"></i>Экспорт
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" id="exportSalesCSV">Продажи (CSV)</a></li>
+                                <li><a class="dropdown-item" href="#" id="exportUsersCSV">Пользователи (CSV)</a></li>
+                                <li><a class="dropdown-item" href="#" id="exportBouquetsCSV">Букеты (CSV)</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Date Range Filter -->
+    <section class="py-3 border-bottom">
+        <div class="container">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-3">
+                    <label for="startDate" class="form-label">Начальная дата</label>
+                    <input type="date" class="form-control" id="startDate">
+                </div>
+                <div class="col-md-3">
+                    <label for="endDate" class="form-label">Конечная дата</label>
+                    <input type="date" class="form-control" id="endDate">
+                </div>
+                <div class="col-md-2">
+                    <label for="reportType" class="form-label">Тип отчета</label>
+                    <select class="form-select" id="reportType">
+                        <option value="daily">Ежедневный</option>
+                        <option value="weekly">Еженедельный</option>
+                        <option value="monthly" selected>Ежемесячный</option>
+                        <option value="yearly">Годовой</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary mt-4 w-100" id="applyFilters">
+                        <i class="fas fa-filter me-2"></i>Применить
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary mt-4 w-100" id="resetFilters">
+                        <i class="fas fa-redo me-2"></i>Сбросить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Metrics -->
+    <section class="py-4">
+        <div class="container">
+            <div class="row g-4" id="keyMetrics">
+                <!-- Metrics will be loaded here -->
+                <div class="col-12 text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Загрузка метрик...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="py-4">
+        <div class="container">
+            <div class="row g-4">
+                <!-- Revenue Trend -->
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-line me-2"></i>Динамика выручки
+                            </h5>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary active" data-metric="revenue">Выручка</button>
+                                <button class="btn btn-outline-secondary" data-metric="orders">Заказы</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" style="height: 300px;">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Status Distribution -->
+                <div class="col-lg-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-pie me-2"></i>Статусы заказов
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" style="height: 300px;">
+                                <canvas id="orderStatusChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Performing Bouquets -->
+                <div class="col-lg-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-crown me-2"></i>Топ букетов
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                    <tr>
+                                        <th>Букет</th>
+                                        <th class="text-end">Продажи</th>
+                                        <th class="text-end">Выручка</th>
+                                        <th class="text-end">Рейтинг</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="topBouquets">
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-3">
+                                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                                            Загрузка данных...
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Activity -->
+                <div class="col-lg-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-users me-2"></i>Активные пользователи
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                    <tr>
+                                        <th>Пользователь</th>
+                                        <th class="text-end">Заказы</th>
+                                        <th class="text-end">Сумма</th>
+                                        <th class="text-end">Активность</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="userActivity">
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-3">
+                                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                                            Загрузка данных...
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Detailed Reports -->
+    <section class="py-4">
+        <div class="container">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table me-2"></i>Детальный отчет по продажам
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="salesReportTable">
+                            <thead>
+                            <tr>
+                                <th>Номер заказа</th>
+                                <th>Дата</th>
+                                <th>Клиент</th>
+                                <th class="text-end">Количество</th>
+                                <th class="text-end">Сумма</th>
+                                <th>Статус</th>
+                                <th>Товары</th>
+                            </tr>
+                            </thead>
+                            <tbody id="salesReportData">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <div class="spinner-border" role="status"></div>
+                                    <p class="mt-2 mb-0">Загрузка отчета...</p>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<th:block layout:fragment="scripts">
+    <script>
+        console.log("=== ANALYTICS MANAGER INITIALIZING ===");
+
+        class AnalyticsManager {
+            constructor() {
+                this.charts = {};
+                this.currentFilters = {
+                    startDate: null,
+                    endDate: null,
+                    reportType: 'monthly'
+                };
+                console.log("AnalyticsManager constructor called");
+            }
+
+            init() {
+                console.log("Initializing AnalyticsManager");
+                this.setDefaultDateRange();
+                this.bindEvents();
+                this.loadAllData();
+            }
+
+            setDefaultDateRange() {
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setMonth(startDate.getMonth() - 1);
+
+                const startDateInput = document.getElementById('startDate');
+                const endDateInput = document.getElementById('endDate');
+
+                if (startDateInput && endDateInput) {
+                    startDateInput.valueAsDate = startDate;
+                    endDateInput.valueAsDate = endDate;
+
+                    this.currentFilters.startDate = startDate.toISOString().split('T')[0];
+                    this.currentFilters.endDate = endDate.toISOString().split('T')[0];
+
+                    console.log("Date range set:", this.currentFilters);
+                }
+            }
+
+            bindEvents() {
+                console.log("Binding events...");
+
+                const applyFiltersBtn = document.getElementById('applyFilters');
+                const resetFiltersBtn = document.getElementById('resetFilters');
+                const refreshBtn = document.getElementById('refreshAnalytics');
+
+                if (applyFiltersBtn) {
+                    applyFiltersBtn.addEventListener('click', () => this.loadAllData());
+                }
+                if (resetFiltersBtn) {
+                    resetFiltersBtn.addEventListener('click', () => this.resetFilters());
+                }
+                if (refreshBtn) {
+                    refreshBtn.addEventListener('click', () => this.loadAllData());
+                }
+
+                // Export buttons
+                const exportSales = document.getElementById('exportSalesCSV');
+                const exportUsers = document.getElementById('exportUsersCSV');
+                const exportBouquets = document.getElementById('exportBouquetsCSV');
+
+                if (exportSales) {
+                    exportSales.addEventListener('click', () => this.exportReport('sales'));
+                }
+                if (exportUsers) {
+                    exportUsers.addEventListener('click', () => this.exportReport('users'));
+                }
+                if (exportBouquets) {
+                    exportBouquets.addEventListener('click', () => this.exportReport('bouquets'));
+                }
+            }
+
+            async loadAllData() {
+                console.log("Loading all analytics data");
+                this.updateFilters();
+
+                try {
+                    await Promise.all([
+                        this.loadKeyMetrics(),
+                        this.loadRevenueChart(),
+                        this.loadOrderStatusChart(),
+                        this.loadTopBouquets(),
+                        this.loadUserActivity(),
+                        this.loadSalesReport()
+                    ]);
+                    console.log("All analytics data loaded successfully");
+                } catch (error) {
+                    console.error('Error loading analytics data:', error);
+                    this.showError('Ошибка загрузки данных аналитики');
+                }
+            }
+
+            // ИСПРАВЛЕННЫЙ МЕТОД: Очистка и нормализация данных
+            normalizeOrderData(order) {
+                const normalized = { ...order };
+
+                console.log("Original order data:", order);
+
+                // Обработка количества товаров (items_count)
+                if (order.items_count && typeof order.items_count === 'string') {
+                    // Формат: "01.01.2001" - берем первую часть как количество
+                    const parts = order.items_count.split('.');
+                    if (parts.length >= 3) {
+                        normalized.items_count = parseInt(parts[0]) || 1;
+                        console.log(`Converted items_count: ${order.items_count} -> ${normalized.items_count}`);
+                    } else {
+                        normalized.items_count = parseInt(order.items_count) || 1;
+                    }
+                } else {
+                    normalized.items_count = parseInt(order.items_count) || 1;
+                }
+
+                // Обработка суммы (total_amount)
+                if (order.total_amount && typeof order.total_amount === 'string') {
+                    // Формат: "01.01.24000" - берем последнюю часть как сумму
+                    const parts = order.total_amount.split('.');
+                    if (parts.length >= 3) {
+                        const amountStr = parts[2];
+                        normalized.total_amount = parseFloat(amountStr) || 0;
+                        console.log(`Converted total_amount: ${order.total_amount} -> ${normalized.total_amount}`);
+                    } else {
+                        // Пробуем извлечь число из строки
+                        const numberMatch = order.total_amount.match(/\d+/g);
+                        if (numberMatch && numberMatch.length > 0) {
+                            normalized.total_amount = parseFloat(numberMatch[numberMatch.length - 1]) || 0;
+                        } else {
+                            normalized.total_amount = parseFloat(order.total_amount.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+                        }
+                    }
+                } else {
+                    normalized.total_amount = parseFloat(order.total_amount) || 0;
+                }
+
+                // Обработка quantity (если есть отдельное поле)
+                if (order.quantity && typeof order.quantity === 'string') {
+                    const parts = order.quantity.split('.');
+                    if (parts.length >= 3) {
+                        normalized.quantity = parseInt(parts[0]) || 1;
+                    } else {
+                        normalized.quantity = parseInt(order.quantity) || 1;
+                    }
+                } else if (order.quantity) {
+                    normalized.quantity = parseInt(order.quantity) || 1;
+                } else {
+                    // Если quantity нет, используем items_count
+                    normalized.quantity = normalized.items_count;
+                }
+
+                // Исправление статусов
+                if (order.status === 'COMPLETI') {
+                    normalized.status = 'COMPLETED';
+                } else if (order.status === 'IN_PROGF') {
+                    normalized.status = 'IN_PROGRESS';
+                }
+
+                console.log("Normalized order data:", normalized);
+                return normalized;
+            }
+
+            async loadKeyMetrics() {
+                try {
+                    console.log("Loading key metrics from /api/reports/monthly-revenue");
+                    const response = await fetch('/api/reports/monthly-revenue');
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log("Key metrics response:", result);
+
+                    if (result.success && result.data && result.data.length > 0) {
+                        const metrics = result.data[0];
+                        this.renderKeyMetrics(metrics);
+                    } else {
+                        this.renderKeyMetrics({
+                            total_revenue: 0,
+                            total_orders: 0,
+                            average_order_value: 0
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading key metrics:', error);
+                    this.renderKeyMetrics({
+                        total_revenue: 0,
+                        total_orders: 0,
+                        average_order_value: 0
+                    });
+                }
+            }
+
+            renderKeyMetrics(metrics) {
+                const metricsContainer = document.getElementById('keyMetrics');
+                if (!metricsContainer) {
+                    console.error("Key metrics container not found");
+                    return;
+                }
+
+                console.log("Rendering key metrics:", metrics);
+
+                metricsContainer.innerHTML = `
+                    <div class="col-md-3">
+                        <div class="card border-0 bg-success text-white shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h4 class="mb-0">₽${this.formatNumber(metrics.total_revenue || 0)}</h4>
+                                        <p class="mb-0">Общая выручка</p>
+                                    </div>
+                                    <div class="icon-circle">
+                                        <i class="fas fa-money-bill-wave fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 bg-primary text-white shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h4 class="mb-0">${metrics.total_orders || 0}</h4>
+                                        <p class="mb-0">Всего заказов</p>
+                                    </div>
+                                    <div class="icon-circle">
+                                        <i class="fas fa-shopping-bag fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 bg-info text-white shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h4 class="mb-0">₽${this.formatNumber(metrics.average_order_value || 0)}</h4>
+                                        <p class="mb-0">Средний чек</p>
+                                    </div>
+                                    <div class="icon-circle">
+                                        <i class="fas fa-chart-line fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 bg-warning text-white shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h4 class="mb-0" id="activeUsersCount">0</h4>
+                                        <p class="mb-0">Активных пользователей</p>
+                                    </div>
+                                    <div class="icon-circle">
+                                        <i class="fas fa-users fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                this.loadActiveUsersCount();
+            }
+
+            async loadActiveUsersCount() {
+                try {
+                    const response = await fetch('/api/reports/user-activity');
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.success && result.data) {
+                            const activeUsers = result.data.filter(user => user.total_orders > 0).length;
+                            const activeUsersElement = document.getElementById('activeUsersCount');
+                            if (activeUsersElement) {
+                                activeUsersElement.textContent = activeUsers;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading active users count:', error);
+                }
+            }
+
+            async loadRevenueChart() {
+                try {
+                    console.log("Loading revenue chart data");
+                    const response = await fetch('/api/reports/monthly-revenue');
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log("Revenue chart response:", result);
+                        if (result.success && result.data) {
+                            this.renderRevenueChart(result.data);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading revenue chart:', error);
+                    this.renderEmptyChart('revenueChart', 'Нет данных для графика выручки');
+                }
+            }
+
+            renderRevenueChart(data) {
+                const ctx = document.getElementById('revenueChart');
+                if (!ctx) {
+                    console.error("Revenue chart canvas not found");
+                    return;
+                }
+
+                console.log("Rendering revenue chart with data:", data);
+
+                if (this.charts.revenue) {
+                    this.charts.revenue.destroy();
+                }
+
+                if (!data || data.length === 0) {
+                    this.renderEmptyChart('revenueChart', 'Нет данных для отображения');
+                    return;
+                }
+
+                this.charts.revenue = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(item => item.month_year || 'Unknown'),
+                        datasets: [{
+                            label: 'Выручка',
+                            data: data.map(item => item.total_revenue || 0),
+                            borderColor: '#e91e63',
+                            backgroundColor: 'rgba(233, 30, 99, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Выручка: ₽${context.parsed.y.toLocaleString('ru-RU')}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '₽' + value.toLocaleString('ru-RU');
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                console.log("Revenue chart rendered successfully");
+            }
+
+            renderEmptyChart(canvasId, message) {
+                const ctx = document.getElementById(canvasId);
+                if (!ctx) return;
+
+                if (this.charts[canvasId]) {
+                    this.charts[canvasId].destroy();
+                }
+
+                this.charts[canvasId] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Нет данных'],
+                        datasets: [{
+                            label: message,
+                            data: [0],
+                            borderColor: '#ccc',
+                            backgroundColor: 'rgba(204, 204, 204, 0.1)',
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            async loadOrderStatusChart() {
+                try {
+                    console.log("Loading order status data from /api/orders/status-stats");
+                    const response = await fetch('/api/orders/status-stats');
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log("Order status stats response:", result);
+
+                    if (result.success && result.data) {
+                        this.renderOrderStatusChart(result.data);
+                    } else {
+                        console.error('Failed to load order status stats:', result.message);
+                        this.renderEmptyChart('orderStatusChart', 'Нет данных о статусах заказов');
+                    }
+                } catch (error) {
+                    console.error('Error loading order status chart:', error);
+                    this.renderEmptyChart('orderStatusChart', 'Ошибка загрузки данных');
+                }
+            }
+
+            renderOrderStatusChart(statusStats) {
+                const ctx = document.getElementById('orderStatusChart');
+                if (!ctx) {
+                    console.error("Order status chart canvas not found");
+                    return;
+                }
+
+                if (this.charts.orderStatus) {
+                    this.charts.orderStatus.destroy();
+                }
+
+                console.log("Rendering order status chart with data:", statusStats);
+
+                const labels = [];
+                const data = [];
+                const backgroundColors = ['#ffc107', '#17a2b8', '#007bff', '#28a745', '#dc3545'];
+
+                const statusMapping = {
+                    'PENDING': 'Ожидают',
+                    'CONFIRMED': 'Подтверждены',
+                    'IN_PROGRESS': 'В процессе',
+                    'COMPLETED': 'Завершены',
+                    'CANCELLED': 'Отменены',
+                    'COMPLETI': 'Завершены',
+                    'IN_PROGF': 'В процессе'
+                };
+
+                if (statusStats && statusStats.length > 0) {
+                    statusStats.forEach((stat, index) => {
+                        const status = stat.status || 'PENDING';
+                        const displayStatus = statusMapping[status] || status;
+                        labels.push(displayStatus);
+                        data.push(stat.count || 0);
+                    });
+                } else {
+                    console.warn("No status stats data, using fallback");
+                    labels.push('Нет данных');
+                    data.push(1);
+                    backgroundColors[0] = '#ccc';
+                }
+
+                console.log("Chart data - labels:", labels, "data:", data);
+
+                this.charts.orderStatus = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: backgroundColors.slice(0, labels.length),
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `${label}: ${value} заказов (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                console.log("Order status chart rendered successfully");
+            }
+
+            async loadTopBouquets() {
+                try {
+                    console.log("Loading top bouquets data");
+                    const response = await fetch('/api/reports/bouquet-stats');
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log("Top bouquets response:", result);
+                        if (result.success && result.data) {
+                            this.renderTopBouquets(result.data);
+                            return;
+                        }
+                    }
+                    this.renderNoData('topBouquets', 'Нет данных о букетах');
+                } catch (error) {
+                    console.error('Error loading top bouquets:', error);
+                    this.renderNoData('topBouquets', 'Ошибка загрузки данных');
+                }
+            }
+
+            renderTopBouquets(bouquets) {
+                const tbody = document.getElementById('topBouquets');
+                if (!tbody) return;
+
+                if (!bouquets || bouquets.length === 0) {
+                    this.renderNoData('topBouquets', 'Нет данных о букетах');
+                    return;
+                }
+
+                const sortedBouquets = bouquets
+                    .sort((a, b) => (b.times_ordered || 0) - (a.times_ordered || 0))
+                    .slice(0, 5);
+
+                console.log("Rendering top bouquets:", sortedBouquets);
+
+                tbody.innerHTML = sortedBouquets.map(bouquet => `
+                    <tr>
+                        <td>
+                            <strong>${bouquet.name || 'Неизвестный букет'}</strong>
+                            <br><small class="text-muted">${bouquet.category || 'Без категории'}</small>
+                        </td>
+                        <td class="text-end">${bouquet.times_ordered || 0}</td>
+                        <td class="text-end">₽${this.formatNumber((bouquet.price || 0) * (bouquet.times_ordered || 0))}</td>
+                        <td class="text-end">
+                            <span class="badge bg-warning">
+                                <i class="fas fa-star me-1"></i>${(bouquet.average_rating || 0).toFixed(1)}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+
+                console.log("Top bouquets rendered successfully");
+            }
+
+            renderNoData(elementId, message) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-3">
+                                <i class="fas fa-info-circle me-2"></i>${message}
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+
+            async loadUserActivity() {
+                try {
+                    console.log("Loading user activity data");
+                    const response = await fetch('/api/reports/user-activity');
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log("User activity response:", result);
+                        if (result.success && result.data) {
+                            this.renderUserActivity(result.data);
+                            return;
+                        }
+                    }
+                    this.renderNoData('userActivity', 'Нет данных о пользователях');
+                } catch (error) {
+                    console.error('Error loading user activity:', error);
+                    this.renderNoData('userActivity', 'Ошибка загрузки данных');
+                }
+            }
+
+            renderUserActivity(users) {
+                const tbody = document.getElementById('userActivity');
+                if (!tbody) return;
+
+                if (!users || users.length === 0) {
+                    this.renderNoData('userActivity', 'Нет данных о пользователях');
+                    return;
+                }
+
+                const activeUsers = users
+                    .filter(user => user.total_orders > 0)
+                    .sort((a, b) => (b.total_spent || 0) - (a.total_spent || 0))
+                    .slice(0, 5);
+
+                if (activeUsers.length === 0) {
+                    this.renderNoData('userActivity', 'Нет активных пользователей');
+                    return;
+                }
+
+                console.log("Rendering user activity:", activeUsers);
+
+                tbody.innerHTML = activeUsers.map(user => `
+                    <tr>
+                        <td>
+                            <strong>${user.username || 'Пользователь'}</strong>
+                            <br><small class="text-muted">${user.email || 'Нет email'}</small>
+                        </td>
+                        <td class="text-end">${user.total_orders || 0}</td>
+                        <td class="text-end">₽${this.formatNumber(user.total_spent || 0)}</td>
+                        <td class="text-end">
+                            <small class="text-muted">
+                                ${user.registration_date ? new Date(user.registration_date).toLocaleDateString('ru-RU') : 'Неизвестно'}
+                            </small>
+                        </td>
+                    </tr>
+                `).join('');
+
+                console.log("User activity rendered successfully");
+            }
+
+            async loadSalesReport() {
+                try {
+                    console.log("Loading sales report data");
+                    const response = await fetch('/api/reports/sales');
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log("Sales report response:", result);
+                        if (result.success && result.data) {
+                            this.renderSalesReport(result.data);
+                            return;
+                        }
+                    }
+                    this.renderNoData('salesReportData', 'Нет данных о продажах');
+                } catch (error) {
+                    console.error('Error loading sales report:', error);
+                    this.renderNoData('salesReportData', 'Ошибка загрузки данных');
+                }
+            }
+
+            renderSalesReport(sales) {
+                const tbody = document.getElementById('salesReportData');
+                if (!tbody) return;
+
+                if (!sales || sales.length === 0) {
+                    this.renderNoData('salesReportData', 'Нет данных о продажах');
+                    return;
+                }
+
+                console.log("Original sales data:", sales);
+
+                // Нормализуем данные перед отображением
+                const normalizedSales = sales.map(sale => this.normalizeOrderData(sale));
+
+                console.log("Normalized sales data:", normalizedSales);
+
+                tbody.innerHTML = normalizedSales.map(sale => `
+                    <tr>
+                        <td>
+                            <a href="/orders/${sale.order_id}" class="text-decoration-none">
+                                <strong>${sale.order_number || 'N/A'}</strong>
+                            </a>
+                        </td>
+                        <td>${sale.order_date ? new Date(sale.order_date).toLocaleDateString('ru-RU') : 'Неизвестно'}</td>
+                        <td>${sale.customer || 'Неизвестный клиент'}</td>
+                        <td class="text-end">${sale.items_count || 1} шт.</td>
+                        <td class="text-end">₽${this.formatNumber(sale.total_amount || 0)}</td>
+                        <td>
+                            <span class="badge bg-${this.getStatusBadgeClass(sale.status)}">
+                                ${this.getStatusText(sale.status)}
+                            </span>
+                        </td>
+                        <td>
+                            <small class="text-muted">${sale.bouquet_names || 'Нет информации'}</small>
+                        </td>
+                    </tr>
+                `).join('');
+
+                console.log("Sales report rendered successfully");
+            }
+
+            async exportReport(type) {
+                try {
+                    let endpoint = '';
+                    let filename = '';
+
+                    switch (type) {
+                        case 'sales':
+                            endpoint = '/api/reports/sales';
+                            filename = 'отчет_продажи.csv';
+                            break;
+                        case 'users':
+                            endpoint = '/api/reports/user-activity';
+                            filename = 'отчет_пользователи.csv';
+                            break;
+                        case 'bouquets':
+                            endpoint = '/api/reports/bouquet-stats';
+                            filename = 'отчет_букеты.csv';
+                            break;
+                    }
+
+                    console.log(`Exporting ${type} report from ${endpoint}`);
+
+                    const response = await fetch(endpoint);
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.success && result.data) {
+                            // Нормализуем данные перед экспортом
+                            const normalizedData = result.data.map(item =>
+                                type === 'sales' ? this.normalizeOrderData(item) : item
+                            );
+                            this.downloadExcelCSV(normalizedData, filename);
+                            this.showSuccess('Отчет экспортирован успешно');
+                        } else {
+                            this.showError('Нет данных для экспорта');
+                        }
+                    } else {
+                        this.showError('Ошибка при загрузке данных для экспорта');
+                    }
+                } catch (error) {
+                    console.error('Error exporting report:', error);
+                    this.showError('Ошибка при экспорте отчета');
+                }
+            }
+
+            downloadExcelCSV(data, filename) {
+                if (!data || data.length === 0) {
+                    this.showError('Нет данных для экспорта');
+                    return;
+                }
+
+                const headers = Object.keys(data[0]);
+                const russianHeaders = this.getRussianHeaders(headers, filename);
+
+                const csvContent = [
+                    '\uFEFF' + russianHeaders.join(';'),
+                    ...data.map(row => headers.map(header => {
+                        const value = row[header] || '';
+                        return this.formatExcelValue(value);
+                    }).join(';'))
+                ].join('\r\n');
+
+                const blob = new Blob([csvContent], {
+                    type: 'text/csv;charset=Windows-1251;'
+                });
+
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                console.log(`Excel CSV exported: ${filename}`);
+            }
+
+            getRussianHeaders(headers, filename) {
+                const headerMapping = {
+                    'order_number': 'Номер заказа',
+                    'order_date': 'Дата заказа',
+                    'customer': 'Клиент',
+                    'items_count': 'Количество товаров',
+                    'total_amount': 'Сумма',
+                    'status': 'Статус',
+                    'bouquet_names': 'Товары',
+                    'username': 'Имя пользователя',
+                    'email': 'Email',
+                    'total_orders': 'Всего заказов',
+                    'total_spent': 'Общая сумма',
+                    'registration_date': 'Дата регистрации',
+                    'name': 'Название букета',
+                    'category': 'Категория',
+                    'times_ordered': 'Количество продаж',
+                    'price': 'Цена',
+                    'average_rating': 'Средний рейтинг',
+                    'revenue': 'Выручка'
+                };
+                return headers.map(header => headerMapping[header] || header);
+            }
+
+            formatExcelValue(value) {
+                if (value === null || value === undefined) return '';
+
+                const strValue = String(value);
+
+                if (strValue.includes(';') || strValue.includes('"') || strValue.includes('\n') || strValue.includes('\r')) {
+                    return '"' + strValue.replace(/"/g, '""') + '"';
+                }
+
+                if (this.isDateString(strValue)) {
+                    return this.formatExcelDate(strValue);
+                }
+
+                if (this.isNumberString(strValue)) {
+                    return strValue.replace(/\s/g, '').replace(',', '.');
+                }
+
+                return strValue;
+            }
+
+            isDateString(value) {
+                return !isNaN(Date.parse(value)) || /^\d{4}-\d{2}-\d{2}/.test(value);
+            }
+
+            formatExcelDate(dateString) {
+                try {
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString('ru-RU');
+                } catch (e) {
+                    return dateString;
+                }
+            }
+
+            isNumberString(value) {
+                const num = value.replace(/\s/g, '').replace(',', '.');
+                return !isNaN(parseFloat(num)) && isFinite(num);
+            }
+
+            // Вспомогательные методы
+            formatNumber(num) {
+                return new Intl.NumberFormat('ru-RU').format(num);
+            }
+
+            getStatusBadgeClass(status) {
+                const statusClasses = {
+                    'PENDING': 'warning',
+                    'CONFIRMED': 'info',
+                    'IN_PROGRESS': 'primary',
+                    'COMPLETED': 'success',
+                    'CANCELLED': 'danger',
+                    'COMPLETI': 'success',
+                    'IN_PROGF': 'primary'
+                };
+                return statusClasses[status] || 'secondary';
+            }
+
+            getStatusText(status) {
+                const statusTexts = {
+                    'PENDING': 'Ожидает',
+                    'CONFIRMED': 'Подтвержден',
+                    'IN_PROGRESS': 'В процессе',
+                    'COMPLETED': 'Завершен',
+                    'CANCELLED': 'Отменен',
+                    'COMPLETI': 'Завершен',
+                    'IN_PROGF': 'В процессе'
+                };
+                return statusTexts[status] || status;
+            }
+
+            showSuccess(message) {
+                this.showNotification(message, 'success');
+            }
+
+            showError(message) {
+                this.showNotification(message, 'error');
+            }
+
+            showNotification(message, type) {
+                const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+                const alert = document.createElement('div');
+                alert.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+                alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+                alert.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+
+                document.body.appendChild(alert);
+
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        alert.parentNode.removeChild(alert);
+                    }
+                }, 5000);
+            }
+
+            updateFilters() {
+                const startDateInput = document.getElementById('startDate');
+                const endDateInput = document.getElementById('endDate');
+                const reportTypeSelect = document.getElementById('reportType');
+
+                if (startDateInput) this.currentFilters.startDate = startDateInput.value;
+                if (endDateInput) this.currentFilters.endDate = endDateInput.value;
+                if (reportTypeSelect) this.currentFilters.reportType = reportTypeSelect.value;
+
+                console.log("Filters updated:", this.currentFilters);
+            }
+
+            resetFilters() {
+                this.setDefaultDateRange();
+                const reportTypeSelect = document.getElementById('reportType');
+                if (reportTypeSelect) {
+                    reportTypeSelect.value = 'monthly';
+                }
+                this.loadAllData();
+                console.log("Filters reset");
+            }
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Initializing Analytics Manager...");
+            window.analyticsManager = new AnalyticsManager();
+            window.analyticsManager.init();
+            console.log("=== ANALYTICS MANAGER INITIALIZED ===");
+        });
+    </script>
+</th:block>
+
+<style>
+    .icon-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .chart-container {
+        position: relative;
+    }
+
+    .card {
+        transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+       transform: translateY(-2px);
+    }
+</style>
+</body>
+</html>

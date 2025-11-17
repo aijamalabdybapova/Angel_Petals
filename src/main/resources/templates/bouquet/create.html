@@ -191,44 +191,38 @@
 </div>
 
 <script>
-    function previewImage(input) {
-        const preview = document.getElementById('imagePreview');
-        const img = document.getElementById('previewImage');
+    // ФУНКЦИИ ТУТ ЖЕ
 
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
+    // ДОБАВЬТЕ ЭТОТ КОД В КОНЕЦ СКРИПТА
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM полностью загружен');
 
-            reader.onload = function(e) {
-                img.src = e.target.result;
-                preview.style.display = 'block';
-            }
-
-            reader.readAsDataURL(input.files[0]);
-        } else {
-            preview.style.display = 'none';
+        // Вешаем обработчик на тестовую кнопку
+        const testButton = document.getElementById('testButton');
+        if (testButton) {
+            testButton.addEventListener('click', function() {
+                alert('JavaScript работает через event listener!');
+                console.log('Test button clicked via event listener');
+            });
         }
-    }
 
-    // Auto-toggle inStock based on stockQuantity
-    document.getElementById('stockQuantity').addEventListener('input', function() {
-        const inStockCheckbox = document.getElementById('inStock');
-        const stockQuantity = parseInt(this.value) || 0;
+        // Вешаем обработчики на кнопки корзины
+        document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const bouquetId = this.getAttribute('data-bouquet-id');
+                console.log('Cart button clicked:', bouquetId);
+                addToCart(bouquetId);
+            });
+        });
 
-        if (stockQuantity > 0) {
-            inStockCheckbox.checked = true;
-        } else {
-            inStockCheckbox.checked = false;
-        }
-    });
-
-    // Form validation
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const price = document.getElementById('price').value;
-        if (price && parseFloat(price) <= 0) {
-            e.preventDefault();
-            alert('Цена должна быть больше 0');
-            return false;
-        }
+        // Фильтры
+        const filterForm = document.getElementById('filterForm');
+        const filterElements = document.querySelectorAll('#categoryId, #sort, #direction');
+        filterElements.forEach(element => {
+            element.addEventListener('change', function() {
+                filterForm.submit();
+            });
+        });
     });
 </script>
 </body>

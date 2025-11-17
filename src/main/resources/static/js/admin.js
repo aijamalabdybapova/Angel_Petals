@@ -74,8 +74,8 @@ class AdminManager {
 
     showRoleChangeModal(userId) {
         // In a real application, this would show a modal with role options
-        const newRole = prompt('Введите новую роль (ROLE_USER, ROLE_MANAGER, ROLE_ADMIN):');
-        if (newRole && ['ROLE_USER', 'ROLE_MANAGER', 'ROLE_ADMIN'].includes(newRole)) {
+        const newRole = prompt('Введите новую роль (ROLE_USER, ROLE_ADMIN):');
+        if (newRole && ['ROLE_USER', 'ROLE_ADMIN'].includes(newRole)) {
             this.changeUserRole(userId, newRole);
         } else if (newRole) {
             this.showNotification('Неверная роль', 'error');

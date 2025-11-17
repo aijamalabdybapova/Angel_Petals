@@ -5,6 +5,11 @@ class CartManager {
         this.init();
     }
 
+    // Вынесите функцию getCSRFToken ВНЕ класса
+    getCSRFToken() {
+        return document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
+    }
+
     init() {
         this.updateCartCounter();
         this.bindEvents();
@@ -41,31 +46,42 @@ class CartManager {
         });
     }
 
-    addToCart(bouquetId, quantity = 1) {
-        const existingItem = this.cart.find(item => item.bouquetId === bouquetId);
-
-        if (existingItem) {
-            existingItem.quantity += quantity;
-        } else {
-            this.cart.push({
-                bouquetId: bouquetId,
-                quantity: quantity,
-                addedAt: new Date().toISOString()
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ addToCart
+    async addToCart(bouquetId, quantity = 1) {
+        try {
+            const response = await fetch('/api/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this.getCSRFToken()
+                },
+                body: JSON.stringify({
+                    bouquetId: parseInt(bouquetId),
+                    quantity: quantity
+                })
             });
-        }
 
-        this.saveCart();
-        this.updateCartCounter();
-        this.showNotification('Товар добавлен в корзину!', 'success');
+            const result = await response.json();
+
+            if (result.success) {
+                this.showNotification('Товар добавлен в корзину!', 'success');
+                this.updateCartCounter();
+            } else {
+                this.showNotification('Ошибка: ' + result.message, 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            this.showNotification('Ошибка при добавлении в корзину', 'error');
+        }
     }
 
+    // Остальные методы остаются без изменений...
     removeFromCart(bouquetId) {
         this.cart = this.cart.filter(item => item.bouquetId !== bouquetId);
         this.saveCart();
         this.updateCartCounter();
         this.showNotification('Товар удален из корзины', 'info');
 
-        // Refresh cart display if on cart page
         if (window.location.pathname.includes('/cart')) {
             this.displayCartItems();
         }
@@ -82,7 +98,6 @@ class CartManager {
             item.quantity = quantity;
             this.saveCart();
 
-            // Refresh cart display if on cart page
             if (window.location.pathname.includes('/cart')) {
                 this.displayCartItems();
             }
@@ -138,20 +153,18 @@ class CartManager {
                     <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
                     <h4>Корзина пуста</h4>
                     <p class="text-muted">Добавьте товары в корзину</p>
-                    <a href="/flowershop/bouquets" class="btn btn-primary">Перейти к букетам</a>
+                    <a href="/bouquets" class="btn btn-primary">Перейти к букетам</a>
                 </div>
             `;
             return;
         }
 
-        // This would typically fetch bouquet details from API
         cartContainer.innerHTML = `
             <div class="text-center py-3">
                 <p class="text-muted">Загрузка корзины...</p>
             </div>
         `;
 
-        // Simulate API call to get bouquet details
         this.fetchBouquetDetails().then(bouquets => {
             const totalPrice = this.getTotalPrice(bouquets);
 
@@ -164,7 +177,7 @@ class CartManager {
                         <div class="card-body">
                             <div class="row align-items-center">
                                 <div class="col-md-2">
-                                    <img src="${bouquet.imageUrl ? '/flowershop/uploads/' + bouquet.imageUrl : '/flowershop/images/default-bouquet.jpg'}"
+                                    <img src="${bouquet.imageUrl ? '/uploads/' + bouquet.imageUrl : '/images/default-bouquet.jpg'}"
                                          class="img-fluid rounded"
                                          alt="${bouquet.name}"
                                          style="max-height: 80px; object-fit: cover;">
@@ -227,19 +240,15 @@ class CartManager {
                 </div>
             `;
 
-            // Add event listeners for new elements
             this.bindCartEvents();
         });
     }
 
     fetchBouquetDetails() {
-        // This would typically make API calls to get bouquet details
-        // For demo, return empty array
         return Promise.resolve([]);
     }
 
     bindCartEvents() {
-        // Minus buttons
         document.querySelectorAll('.minus-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const bouquetId = e.target.dataset.bouquetId;
@@ -251,7 +260,6 @@ class CartManager {
             });
         });
 
-        // Plus buttons
         document.querySelectorAll('.plus-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const bouquetId = e.target.dataset.bouquetId;
@@ -263,7 +271,6 @@ class CartManager {
             });
         });
 
-        // Checkout button
         const checkoutBtn = document.getElementById('checkoutBtn');
         if (checkoutBtn) {
             checkoutBtn.addEventListener('click', () => {
@@ -271,7 +278,6 @@ class CartManager {
             });
         }
 
-        // Clear cart button
         const clearCartBtn = document.getElementById('clearCartBtn');
         if (clearCartBtn) {
             clearCartBtn.addEventListener('click', () => {
@@ -285,9 +291,7 @@ class CartManager {
             this.showNotification('Корзина пуста', 'warning');
             return;
         }
-
-        // Redirect to order creation page
-        window.location.href = '/flowershop/orders/create';
+        window.location.href = '/orders/create';
     }
 
     showNotification(message, type = 'info') {

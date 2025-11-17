@@ -20,6 +20,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findByOrderNumber(String orderNumber);
     List<Order> findByStatus(Order.OrderStatus status);
 
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.orderItems WHERE o.id = :id")
+    Optional<Order> findByIdWithItems(@Param("id") Long id);
+
     @Query("SELECT o FROM Order o WHERE o.deleted = false")
     List<Order> findAllActive();
 

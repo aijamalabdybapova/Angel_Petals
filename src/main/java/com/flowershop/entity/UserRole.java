@@ -1,18 +1,29 @@
+// entity/UserRole.java
 package com.flowershop.entity;
 
 import jakarta.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "roles")
-public class UserRole {
+public class UserRole extends BaseEntity { // Добавляем наследование
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    public enum RoleName {
+        ROLE_USER,
+
+        ROLE_ADMIN
+    }
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20, unique = true)
+    @Column(name = "name", length = 20, unique = true, nullable = false)
     private RoleName name;
+
+    @Column(name = "description")
+    private String description;
+
+    @ManyToMany(mappedBy = "roles")
+    private Set<User> users = new HashSet<>();
 
     // Constructors
     public UserRole() {}
@@ -21,15 +32,12 @@ public class UserRole {
         this.name = name;
     }
 
+    public UserRole(RoleName name, String description) {
+        this.name = name;
+        this.description = description;
+    }
+
     // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public RoleName getName() {
         return name;
     }
@@ -38,9 +46,19 @@ public class UserRole {
         this.name = name;
     }
 
-    public enum RoleName {
-        ROLE_USER,
-        ROLE_MANAGER,
-        ROLE_ADMIN
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Set<User> getUsers() {
+        return users;
+    }
+
+    public void setUsers(Set<User> users) {
+        this.users = users;
     }
 }

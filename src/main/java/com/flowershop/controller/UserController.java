@@ -32,7 +32,7 @@ public class UserController {
         Page<User> users = userService.findAll(pageable);
 
         model.addAttribute("users", users);
-        return "user/list";
+        return "admin/users";
     }
 
     @PostMapping("/{id}/delete")

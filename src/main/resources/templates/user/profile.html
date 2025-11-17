@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{fragments/header}">
 <head>
     <title>Мой профиль - Цветочный магазин</title>
@@ -65,15 +66,16 @@
 
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label text-muted">Телефон</label>
-                                    <p class="h6" th:text="${user.phoneNumber ?: 'Не указан'}">+7 (999) 123-45-67</p>
+                                    <p class="h6" th:text="${user.phoneNumber != null} ? ${user.phoneNumber} : 'Не указан'">+7 (999) 123-45-67</p>
                                 </div>
 
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label text-muted">Роль</label>
                                     <p>
                                             <span th:each="role : ${user.roles}"
-                                                  th:classappend="'badge bg-' + ${getRoleBadgeClass(role.name)}"
-                                                  th:text="${getRoleText(role.name)}"
+                                                  th:if="${role != null and role.name != null}"
+                                                  th:classappend="'badge bg-' + ${@profileController.getRoleBadgeClass(role.name)}"
+                                                  th:text="${@profileController.getRoleText(role.name)}"
                                                   class="badge me-1">
                                                 USER
                                             </span>
@@ -197,26 +199,6 @@
     </div>
 </div>
 
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    function getRoleBadgeClass(role) {
-        switch (role) {
-            case 'ROLE_ADMIN': return 'danger';
-            case 'ROLE_MANAGER': return 'warning';
-            case 'ROLE_USER': return 'primary';
-            default: return 'secondary';
-        }
-    }
 
-    function getRoleText(role) {
-        switch (role) {
-            case 'ROLE_ADMIN': return 'Админ';
-            case 'ROLE_MANAGER': return 'Менеджер';
-            case 'ROLE_USER': return 'Пользователь';
-            default: return role;
-        }
-    }
-    /*]]>*/
-</script>
 </body>
 </html>

@@ -25,7 +25,7 @@ public class CartController {
     private Long getCurrentUserId(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             System.out.println("User not authenticated!");
-            throw new RuntimeException("Пользователь не аутентифицирован");
+            return null; // Возвращаем null вместо исключения
         }
         String username = authentication.getName();
         System.out.println("Username from authentication: " + username);
@@ -36,22 +36,11 @@ public class CartController {
             return user.getId();
         } catch (Exception e) {
             System.out.println("Error finding user: " + e.getMessage());
-            throw new RuntimeException("Ошибка при получении пользователя: " + e.getMessage());
+            return null; // Возвращаем null вместо исключения
         }
     }
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<CartDto>> getCart(Authentication authentication) {
-        try {
-            Long userId = getCurrentUserId(authentication);
-            CartDto cart = cartService.getCartForUser(userId);
-            return ResponseEntity.ok(ApiResponse.success("Корзина получена", cart));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Ошибка при получении корзины: " + e.getMessage()));
-        }
-    }
-
+    // ПЕРВЫЕ - СПЕЦИФИЧНЫЕ МАРШРУТЫ БЕЗ ПАРАМЕТРОВ
     @PostMapping("/add")
     public ResponseEntity<ApiResponse<CartDto>> addToCart(
             Authentication authentication,
@@ -62,6 +51,14 @@ public class CartController {
             System.out.println("Request: bouquetId=" + request.getBouquetId() + ", quantity=" + request.getQuantity());
 
             Long userId = getCurrentUserId(authentication);
+
+            // Проверяем авторизацию
+            if (userId == null) {
+                System.out.println("User not authenticated - returning 401");
+                return ResponseEntity.status(401)
+                        .body(ApiResponse.error("Для добавления в корзину необходимо войти в систему"));
+            }
+
             System.out.println("User ID: " + userId);
 
             CartDto cart = cartService.addToCart(userId, request);
@@ -83,6 +80,13 @@ public class CartController {
             System.out.println("Authentication: " + (authentication != null ? authentication.getName() : "null"));
 
             Long userId = getCurrentUserId(authentication);
+
+            // Для неавторизованных пользователей возвращаем 0
+            if (userId == null) {
+                System.out.println("User not authenticated - returning count 0");
+                return ResponseEntity.ok(ApiResponse.success("Количество товаров в корзине", 0));
+            }
+
             System.out.println("User ID: " + userId);
 
             Integer count = cartService.getCartItemCount(userId);
@@ -92,11 +96,30 @@ public class CartController {
         } catch (Exception e) {
             System.out.println("Error getting cart count: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Ошибка при получении количества: " + e.getMessage()));
+            return ResponseEntity.ok(ApiResponse.success("Количество товаров в корзине", 0));
         }
     }
 
+    @DeleteMapping("/clear")
+    public ResponseEntity<ApiResponse<Void>> clearCart(Authentication authentication) {
+        try {
+            Long userId = getCurrentUserId(authentication);
+
+            // Проверяем авторизацию
+            if (userId == null) {
+                return ResponseEntity.status(401)
+                        .body(ApiResponse.error("Для очистки корзины необходимо войти в систему"));
+            }
+
+            cartService.clearCart(userId);
+            return ResponseEntity.ok(ApiResponse.success("Корзина очищена"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Ошибка при очистке корзины: " + e.getMessage()));
+        }
+    }
+
+    // ПОТОМ - МАРШРУТЫ С ПАРАМЕТРАМИ
     @PutMapping("/update/{bouquetId}")
     public ResponseEntity<ApiResponse<CartDto>> updateCartItem(
             Authentication authentication,
@@ -104,6 +127,13 @@ public class CartController {
             @RequestParam Integer quantity) {
         try {
             Long userId = getCurrentUserId(authentication);
+
+            // Проверяем авторизацию
+            if (userId == null) {
+                return ResponseEntity.status(401)
+                        .body(ApiResponse.error("Для обновления корзины необходимо войти в систему"));
+            }
+
             CartDto cart = cartService.updateCartItem(userId, bouquetId, quantity);
             return ResponseEntity.ok(ApiResponse.success("Корзина обновлена", cart));
         } catch (Exception e) {
@@ -118,6 +148,13 @@ public class CartController {
             @PathVariable Long bouquetId) {
         try {
             Long userId = getCurrentUserId(authentication);
+
+            // Проверяем авторизацию
+            if (userId == null) {
+                return ResponseEntity.status(401)
+                        .body(ApiResponse.error("Для удаления из корзины необходимо войти в систему"));
+            }
+
             CartDto cart = cartService.removeFromCart(userId, bouquetId);
             return ResponseEntity.ok(ApiResponse.success("Товар удален из корзины", cart));
         } catch (Exception e) {
@@ -126,17 +163,23 @@ public class CartController {
         }
     }
 
-    @DeleteMapping("/clear")
-    public ResponseEntity<ApiResponse<Void>> clearCart(Authentication authentication) {
+    // ПОСЛЕДНИМ - ОБЩИЙ МАРШРУТ
+    @GetMapping
+    public ResponseEntity<ApiResponse<CartDto>> getCart(Authentication authentication) {
         try {
             Long userId = getCurrentUserId(authentication);
-            cartService.clearCart(userId);
-            return ResponseEntity.ok(ApiResponse.success("Корзина очищена"));
+
+            // Проверяем авторизацию
+            if (userId == null) {
+                return ResponseEntity.status(401)
+                        .body(ApiResponse.error("Для просмотра корзины необходимо войти в систему"));
+            }
+
+            CartDto cart = cartService.getCartForUser(userId);
+            return ResponseEntity.ok(ApiResponse.success("Корзина получена", cart));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Ошибка при очистке корзины: " + e.getMessage()));
+                    .body(ApiResponse.error("Ошибка при получении корзины: " + e.getMessage()));
         }
     }
-
-
 }

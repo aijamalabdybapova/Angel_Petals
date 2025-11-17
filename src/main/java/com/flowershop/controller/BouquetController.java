@@ -6,10 +6,7 @@ import com.flowershop.service.BouquetService;
 import com.flowershop.service.CategoryService;
 import com.flowershop.service.FileStorageService;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,6 +16,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/bouquets")
@@ -85,7 +84,7 @@ public class BouquetController {
     }
 
     @GetMapping("/create")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public String showCreateForm(Model model) {
         model.addAttribute("bouquet", new BouquetDto());
         model.addAttribute("categories", categoryService.findAllActive());
@@ -93,7 +92,7 @@ public class BouquetController {
     }
 
     @PostMapping("/create")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public String createBouquet(@ModelAttribute("bouquet") @Valid BouquetDto bouquetDto,
                                 BindingResult result,
                                 @RequestParam("imageFile") MultipartFile imageFile,
@@ -123,7 +122,7 @@ public class BouquetController {
     }
 
     @GetMapping("/edit/{id}")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public String showEditForm(@PathVariable Long id, Model model) {
         Bouquet bouquet = bouquetService.findById(id);
         BouquetDto bouquetDto = new BouquetDto();
@@ -142,7 +141,7 @@ public class BouquetController {
     }
 
     @PostMapping("/edit/{id}")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public String updateBouquet(@PathVariable Long id,
                                 @ModelAttribute("bouquet") @Valid BouquetDto bouquetDto,
                                 BindingResult result,
@@ -179,7 +178,7 @@ public class BouquetController {
     }
 
     @PostMapping("/delete/{id}")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public String deleteBouquet(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             bouquetService.delete(id);
@@ -191,7 +190,7 @@ public class BouquetController {
     }
 
     @GetMapping("/manage")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public String manageBouquets(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
@@ -200,23 +199,45 @@ public class BouquetController {
             @RequestParam(defaultValue = "10") int size,
             Model model) {
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
         Page<Bouquet> bouquetsPage;
 
-        // Базовый запрос с поиском
+        // ПРАВИЛЬНАЯ ЛОГИКА ФИЛЬТРАЦИИ
         if (search != null && !search.trim().isEmpty()) {
-            bouquetsPage = bouquetService.findBySearchIncludeDeleted(search, pageable);
-        } else {
-            bouquetsPage = bouquetService.findAll(pageable);
+            // Поиск + статус + категория
+            if (status != null && category != null) {
+                bouquetsPage = applyAllFilters(search, status, category, pageable);
+            }
+            // Поиск + статус
+            else if (status != null) {
+                bouquetsPage = applySearchAndStatus(search, status, pageable);
+            }
+            // Поиск + категория
+            else if (category != null) {
+                bouquetsPage = bouquetService.findBySearchAndCategory(search, category, pageable);
+            }
+            // Только поиск
+            else {
+                bouquetsPage = bouquetService.findBySearchIncludeDeleted(search, pageable);
+            }
         }
-
-        // Дополнительная фильтрация по статусу
-        if ("active".equals(status)) {
-            bouquetsPage = bouquetService.findByDeletedFalse(pageable);
-        } else if ("inactive".equals(status)) {
-            bouquetsPage = bouquetService.findByDeletedTrue(pageable);
-        } else if ("out_of_stock".equals(status)) {
-            bouquetsPage = bouquetService.findByInStockFalse(pageable);
+        // Без поиска, только статус и/или категория
+        else {
+            if (status != null && category != null) {
+                bouquetsPage = applyStatusAndCategory(status, category, pageable);
+            }
+            // Только статус
+            else if (status != null) {
+                bouquetsPage = applyStatusFilter(status, pageable);
+            }
+            // Только категория
+            else if (category != null) {
+                bouquetsPage = bouquetService.findByCategoryId(category, pageable);
+            }
+            // Без фильтров - все букеты
+            else {
+                bouquetsPage = bouquetService.findAll(pageable);
+            }
         }
 
         model.addAttribute("bouquets", bouquetsPage);
@@ -224,7 +245,69 @@ public class BouquetController {
         model.addAttribute("search", search);
         model.addAttribute("status", status);
         model.addAttribute("category", category);
+        model.addAttribute("statusParam", status); // Для пагинации
+        model.addAttribute("categoryParam", category); // Для пагинации
 
         return "bouquet/manage";
+    }
+
+    // Вспомогательные методы для комбинированных фильтров
+    private Page<Bouquet> applyAllFilters(String search, String status, Long category, Pageable pageable) {
+        Page<Bouquet> result = bouquetService.findBySearchAndCategory(search, category, pageable);
+
+        // Конвертируем Streamable в List и создаем новый Page
+        List<Bouquet> filteredContent = result.getContent().stream()
+                .filter(b -> {
+                    if ("active".equals(status)) return !b.getDeleted();
+                    if ("inactive".equals(status)) return b.getDeleted();
+                    if ("out_of_stock".equals(status)) return !b.getInStock();
+                    return true;
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(filteredContent, pageable, filteredContent.size());
+    }
+
+    private Page<Bouquet> applySearchAndStatus(String search, String status, Pageable pageable) {
+        Page<Bouquet> result = bouquetService.findBySearchIncludeDeleted(search, pageable);
+
+        List<Bouquet> filteredContent = result.getContent().stream()
+                .filter(b -> {
+                    if ("active".equals(status)) return !b.getDeleted();
+                    if ("inactive".equals(status)) return b.getDeleted();
+                    if ("out_of_stock".equals(status)) return !b.getInStock();
+                    return true;
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(filteredContent, pageable, filteredContent.size());
+    }
+
+    private Page<Bouquet> applyStatusAndCategory(String status, Long category, Pageable pageable) {
+        Page<Bouquet> result = bouquetService.findByCategoryId(category, pageable);
+
+        List<Bouquet> filteredContent = result.getContent().stream()
+                .filter(b -> {
+                    if ("active".equals(status)) return !b.getDeleted();
+                    if ("inactive".equals(status)) return b.getDeleted();
+                    if ("out_of_stock".equals(status)) return !b.getInStock();
+                    return true;
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(filteredContent, pageable, filteredContent.size());
+    }
+
+    private Page<Bouquet> applyStatusFilter(String status, Pageable pageable) {
+        switch (status) {
+            case "active":
+                return bouquetService.findByDeletedFalse(pageable);
+            case "inactive":
+                return bouquetService.findByDeletedTrue(pageable);
+            case "out_of_stock":
+                return bouquetService.findByInStockFalse(pageable);
+            default:
+                return bouquetService.findAll(pageable);
+        }
     }
 }

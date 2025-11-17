@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчет по продажам - FlowerShop</title>
+    <th:block th:insert="~{fragments/head :: head}"></th:block>
+    <style>
+        .filter-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        .export-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border: none;
+            color: white;
+        }
+        .table-hover tbody tr:hover {
+            background-color: rgba(0,123,255,0.1);
+        }
+    </style>
+</head>
+<body>
+<th:block th:insert="~{fragments/navbar :: navbar}"></th:block>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-3 col-lg-2 d-md-block sidebar">
+            <th:block th:insert="~{fragments/admin-sidebar :: admin-sidebar}"></th:block>
+        </div>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">📈 Отчет по продажам</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a th:href="@{/admin/reports/export/sales}" class="btn btn-sm export-btn me-2">
+                        📥 Экспорт в CSV
+                    </a>
+                    <a th:href="@{/admin/reports}" class="btn btn-sm btn-outline-secondary">
+                        ← Назад к панели
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card filter-card mb-4">
+                <div class="card-body">
+                    <h6 class="card-title">🔍 Фильтры</h6>
+                    <form th:action="@{/admin/reports/sales}" method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="startDate" class="form-label">Дата с</label>
+                            <input type="date" class="form-control" id="startDate" name="startDate"
+                                   th:value="${startDate}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="endDate" class="form-label">Дата по</label>
+                            <input type="date" class="form-control" id="endDate" name="endDate"
+                                   th:value="${endDate}">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">Применить фильтры</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sales Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body">
+                            <h6 class="card-title">Общее количество</h6>
+                            <h3 th:text="${salesReport.size()}">0</h3>
+                            <p class="card-text">заказов</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <h6 class="card-title">Общая выручка</h6>
+                            <h3>
+                                    <span th:text="${#numbers.formatDecimal(
+                                        salesReport.?[totalAmount != null].![totalAmount].![

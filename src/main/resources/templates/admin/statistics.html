@@ -5,6 +5,7 @@
       layout:decorate="~{fragments/header}">
 <head>
     <title>Статистика - Админ панель</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 <div layout:fragment="content">
@@ -23,9 +24,18 @@
                         <button class="btn btn-outline-primary" id="refreshStats">
                             <i class="fas fa-sync-alt me-2"></i>Обновить
                         </button>
-                        <button class="btn btn-outline-success" id="exportStats">
-                            <i class="fas fa-download me-2"></i>Экспорт
-                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-success dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown">
+                                <i class="fas fa-download me-2"></i>Экспорт
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="exportReport('sales')">Продажи (CSV)</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportReport('users')">Пользователи (CSV)</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportReport('bouquets')">Букеты (CSV)</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportReport('revenue')">Выручка (CSV)</a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -68,7 +78,11 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h4 class="mb-0" id="totalRevenue">₽0</h4>
+                                    <h4 class="mb-0" id="totalRevenue">
+                                        ₽<span th:if="${stats.totalRevenue != null}"
+                                               th:text="${#numbers.formatDecimal(stats.totalRevenue, 0, 'COMMA', 2, 'POINT')}">0</span>
+                                        <span th:if="${stats.totalRevenue == null}">0</span>
+                                    </h4>
                                     <p class="mb-0">Общая выручка</p>
                                 </div>
                                 <div class="icon-circle">
@@ -91,7 +105,9 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h4 class="mb-0" id="totalOrders">0</h4>
+                                    <h4 class="mb-0" id="totalOrders">
+                                        <span th:text="${stats.totalOrders != null ? stats.totalOrders : 0}">0</span>
+                                    </h4>
                                     <p class="mb-0">Всего заказов</p>
                                 </div>
                                 <div class="icon-circle">
@@ -114,7 +130,9 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h4 class="mb-0" id="activeUsers">0</h4>
+                                    <h4 class="mb-0" id="activeUsers">
+                                        <span th:text="${stats.totalUsers != null ? stats.totalUsers : 0}">0</span>
+                                    </h4>
                                     <p class="mb-0">Активных пользователей</p>
                                 </div>
                                 <div class="icon-circle">
@@ -137,7 +155,11 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h4 class="mb-0" id="avgOrderValue">₽0</h4>
+                                    <h4 class="mb-0" id="avgOrderValue">
+                                        ₽<span th:if="${stats.totalOrders != null && stats.totalOrders > 0 && stats.totalRevenue != null}"
+                                               th:text="${#numbers.formatDecimal(stats.totalRevenue / stats.totalOrders, 0, 'COMMA', 2, 'POINT')}">0</span>
+                                        <span th:if="${stats.totalOrders == null || stats.totalOrders == 0}">0</span>
+                                    </h4>
                                     <p class="mb-0">Средний чек</p>
                                 </div>
                                 <div class="icon-circle">
@@ -214,6 +236,7 @@
                                     <tbody id="popularBouquets">
                                     <tr>
                                         <td colspan="3" class="text-center text-muted py-3">
+                                            <div class="spinner-border spinner-border-sm" role="status"></div>
                                             Загрузка данных...
                                         </td>
                                     </tr>
@@ -245,6 +268,7 @@
                                     <tbody id="userActivity">
                                     <tr>
                                         <td colspan="3" class="text-center text-muted py-3">
+                                            <div class="spinner-border spinner-border-sm" role="status"></div>
                                             Загрузка данных...
                                         </td>
                                     </tr>
@@ -257,35 +281,72 @@
             </div>
         </div>
     </section>
+
+    <!-- Detailed Reports -->
+    <section class="py-4">
+        <div class="container">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table me-2"></i>Детальный отчет по продажам
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="salesReportTable">
+                            <thead>
+                            <tr>
+                                <th>Номер заказа</th>
+                                <th>Дата</th>
+                                <th>Клиент</th>
+                                <th class="text-end">Сумма</th>
+                                <th>Статус</th>
+                                <th>Товары</th>
+                            </tr>
+                            </thead>
+                            <tbody id="salesReportData">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <div class="spinner-border" role="status"></div>
+                                    <p class="mt-2 mb-0">Загрузка отчета...</p>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
+    /*<![CDATA[*/
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize date range (last 30 days)
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 30);
+        console.log('=== ANALYTICS SCRIPT INITIALIZED ===');
 
-        document.getElementById('startDate').valueAsDate = startDate;
-        document.getElementById('endDate').valueAsDate = endDate;
-
-        // Load statistics
+        // Инициализация
+        initializeDateRange();
         loadStatistics();
+        setupEventListeners();
 
-        // Event listeners
-        document.getElementById('applyDateRange').addEventListener('click', loadStatistics);
-        document.getElementById('resetDateRange').addEventListener('click', resetDateRange);
-        document.getElementById('refreshStats').addEventListener('click', loadStatistics);
-        document.getElementById('exportStats').addEventListener('click', exportStatistics);
+        // Тестирование API
+        testAllAPIs();
 
-        function loadStatistics() {
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
+        function initializeDateRange() {
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 30);
 
-            // Simulate API call to get statistics
-            simulateStatisticsData(startDate, endDate);
+            document.getElementById('startDate').valueAsDate = startDate;
+            document.getElementById('endDate').valueAsDate = endDate;
+            console.log('Date range initialized');
+        }
+
+        function setupEventListeners() {
+            document.getElementById('applyDateRange').addEventListener('click', loadStatistics);
+            document.getElementById('resetDateRange').addEventListener('click', resetDateRange);
+            document.getElementById('refreshStats').addEventListener('click', loadStatistics);
         }
 
         function resetDateRange() {
@@ -295,129 +356,289 @@
 
             document.getElementById('startDate').valueAsDate = startDate;
             document.getElementById('endDate').valueAsDate = endDate;
-
             loadStatistics();
         }
 
-        function simulateStatisticsData(startDate, endDate) {
-            // Simulate data - in real application, this would come from API
-            const stats = {
-                totalRevenue: 125000,
-                revenueChange: 12.5,
-                totalOrders: 89,
-                ordersChange: 8.3,
-                activeUsers: 156,
-                usersChange: 15.2,
-                avgOrderValue: 1404,
-                avgOrderChange: 3.8
+        async function loadStatistics() {
+            console.log('Loading statistics...');
+            try {
+                await Promise.all([
+                    loadCharts(),
+                    loadPopularBouquets(),
+                    loadUserActivity(),
+                    loadSalesReport()
+                ]);
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+                showNotification('Ошибка загрузки статистики', 'error');
+            }
+        }
+
+        async function loadCharts() {
+            try {
+                // Revenue chart
+                const revenueResponse = await fetch('/api/reports/monthly-revenue');
+                if (revenueResponse.ok) {
+                    const revenueResult = await revenueResponse.json();
+                    if (revenueResult.success) {
+                        renderRevenueChart(revenueResult.data);
+                    }
+                }
+
+                // Order status chart
+                const ordersResponse = await fetch('/api/orders?size=100');
+                if (ordersResponse.ok) {
+                    const ordersResult = await ordersResponse.json();
+                    if (ordersResult.success) {
+                        renderOrderStatusChart(ordersResult.data.content);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading charts:', error);
+            }
+        }
+
+        function renderRevenueChart(data) {
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+
+            if (window.revenueChartInstance) {
+                window.revenueChartInstance.destroy();
+            }
+
+            if (data && data.length > 0) {
+                window.revenueChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(item => item.month_year),
+                        datasets: [{
+                            label: 'Выручка',
+                            data: data.map(item => item.total_revenue),
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '₽' + value.toLocaleString('ru-RU');
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Показать сообщение об отсутствии данных
+                ctx.getContext('2d').fillText('Нет данных для отображения', 10, 50);
+            }
+        }
+
+        function renderOrderStatusChart(orders) {
+            const ctx = document.getElementById('orderStatusChart');
+            if (!ctx) return;
+
+            if (window.orderStatusChartInstance) {
+                window.orderStatusChartInstance.destroy();
+            }
+
+            const statusCount = {
+                'PENDING': 0, 'CONFIRMED': 0, 'IN_PROGRESS': 0,
+                'COMPLETED': 0, 'CANCELLED': 0
             };
 
-            // Update cards
-            document.getElementById('totalRevenue').textContent = `₽${stats.totalRevenue.toLocaleString()}`;
-            document.getElementById('revenueChange').textContent = `${stats.revenueChange}%`;
-            document.getElementById('totalOrders').textContent = stats.totalOrders;
-            document.getElementById('ordersChange').textContent = `${stats.ordersChange}%`;
-            document.getElementById('activeUsers').textContent = stats.activeUsers;
-            document.getElementById('usersChange').textContent = `${stats.usersChange}%`;
-            document.getElementById('avgOrderValue').textContent = `₽${stats.avgOrderValue}`;
-            document.getElementById('avgOrderChange').textContent = `${stats.avgOrderChange}%`;
+            if (orders && orders.length > 0) {
+                orders.forEach(order => {
+                    statusCount[order.status] = (statusCount[order.status] || 0) + 1;
+                });
 
-            // Initialize charts
-            initializeCharts();
-
-            // Load tables
-            loadPopularBouquets();
-            loadUserActivity();
+                window.orderStatusChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Ожидают', 'Подтверждены', 'В процессе', 'Завершены', 'Отменены'],
+                        datasets: [{
+                            data: Object.values(statusCount),
+                            backgroundColor: ['#ffc107', '#17a2b8', '#007bff', '#28a745', '#dc3545']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            } else {
+                ctx.getContext('2d').fillText('Нет данных для отображения', 10, 50);
+            }
         }
 
-        function initializeCharts() {
-            // Revenue Chart
-            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-            new Chart(revenueCtx, {
-                type: 'line',
-                data: {
-                    labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
-                    datasets: [{
-                        label: 'Выручка',
-                        data: [85000, 92000, 78000, 110000, 125000, 140000],
-                        borderColor: '#e91e63',
-                        backgroundColor: 'rgba(233, 30, 99, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
+        async function loadPopularBouquets() {
+            try {
+                const response = await fetch('/api/reports/bouquet-stats');
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        renderPopularBouquets(result.data);
+                        return;
+                    }
                 }
-            });
-
-            // Order Status Chart
-            const statusCtx = document.getElementById('orderStatusChart').getContext('2d');
-            new Chart(statusCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Завершены', 'В процессе', 'Ожидают', 'Отменены'],
-                    datasets: [{
-                        data: [65, 15, 12, 8],
-                        backgroundColor: [
-                            '#28a745',
-                            '#17a2b8',
-                            '#ffc107',
-                            '#dc3545'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
+                document.getElementById('popularBouquets').innerHTML =
+                    '<tr><td colspan="3" class="text-center text-muted py-3">Нет данных</td></tr>';
+            } catch (error) {
+                console.error('Error loading popular bouquets:', error);
+                document.getElementById('popularBouquets').innerHTML =
+                    '<tr><td colspan="3" class="text-center text-danger py-3">Ошибка загрузки</td></tr>';
+            }
         }
 
-        function loadPopularBouquets() {
-            const popularBouquets = [
-                { name: 'Нежная роза', quantity: 25, revenue: 87500 },
-                { name: 'Свадебный шик', quantity: 18, revenue: 99000 },
-                { name: 'Весенняя свежесть', quantity: 32, revenue: 89600 },
-                { name: 'Романтический микс', quantity: 15, revenue: 63000 },
-                { name: 'Осенняя гармония', quantity: 12, revenue: 38400 }
-            ];
-
+        function renderPopularBouquets(bouquets) {
             const tbody = document.getElementById('popularBouquets');
-            tbody.innerHTML = popularBouquets.map(bouquet => `
-                <tr>
-                    <td>${bouquet.name}</td>
-                    <td class="text-end">${bouquet.quantity}</td>
-                    <td class="text-end">₽${bouquet.revenue.toLocaleString()}</td>
-                </tr>
-            `).join('');
+            if (bouquets && bouquets.length > 0) {
+                const sortedBouquets = bouquets
+                    .sort((a, b) => (b.times_ordered || 0) - (a.times_ordered || 0))
+                    .slice(0, 5);
+
+                tbody.innerHTML = sortedBouquets.map(bouquet => `
+                    <tr>
+                        <td><strong>${bouquet.name || 'Неизвестный букет'}</strong></td>
+                        <td class="text-end">${bouquet.times_ordered || 0}</td>
+                        <td class="text-end">₽${formatNumber((bouquet.price || 0) * (bouquet.times_ordered || 0))}</td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">Нет данных</td></tr>';
+            }
         }
 
-        function loadUserActivity() {
-            const userActivity = [
-                { name: 'Иван Иванов', orders: 8, total: 28500 },
-                { name: 'Мария Петрова', orders: 6, total: 22400 },
-                { name: 'Сергей Сидоров', orders: 5, total: 19500 },
-                { name: 'Анна Ковалева', orders: 4, total: 16800 },
-                { name: 'Дмитрий Волков', orders: 3, total: 12600 }
+        async function loadUserActivity() {
+            try {
+                const response = await fetch('/api/reports/user-activity');
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        renderUserActivity(result.data);
+                        return;
+                    }
+                }
+                document.getElementById('userActivity').innerHTML =
+                    '<tr><td colspan="3" class="text-center text-muted py-3">Нет данных</td></tr>';
+            } catch (error) {
+                console.error('Error loading user activity:', error);
+                document.getElementById('userActivity').innerHTML =
+                    '<tr><td colspan="3" class="text-center text-danger py-3">Ошибка загрузки</td></tr>';
+            }
+        }
+
+        function renderUserActivity(users) {
+            const tbody = document.getElementById('userActivity');
+            if (users && users.length > 0) {
+                const activeUsers = users
+                    .filter(user => user.total_orders > 0)
+                    .sort((a, b) => b.total_spent - a.total_spent)
+                    .slice(0, 5);
+
+                tbody.innerHTML = activeUsers.map(user => `
+                    <tr>
+                        <td><strong>${user.username || 'Неизвестный пользователь'}</strong></td>
+                        <td class="text-end">${user.total_orders || 0}</td>
+                        <td class="text-end">₽${formatNumber(user.total_spent || 0)}</td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">Нет данных</td></tr>';
+            }
+        }
+
+        async function loadSalesReport() {
+            try {
+                const response = await fetch('/api/reports/sales');
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        renderSalesReport(result.data);
+                        return;
+                    }
+                }
+                document.getElementById('salesReportData').innerHTML =
+                    '<tr><td colspan="6" class="text-center text-muted py-4">Нет данных</td></tr>';
+            } catch (error) {
+                console.error('Error loading sales report:', error);
+                document.getElementById('salesReportData').innerHTML =
+                    '<tr><td colspan="6" class="text-center text-danger py-4">Ошибка загрузки</td></tr>';
+            }
+        }
+
+        function renderSalesReport(sales) {
+            const tbody = document.getElementById('salesReportData');
+            if (sales && sales.length > 0) {
+                tbody.innerHTML = sales.map(sale => `
+                    <tr>
+                        <td><strong>${sale.order_number || 'Нет номера'}</strong></td>
+                        <td>${sale.order_date ? new Date(sale.order_date).toLocaleDateString('ru-RU') : 'Нет даты'}</td>
+                        <td>${sale.customer || 'Неизвестный клиент'}</td>
+                        <td class="text-end">₽${formatNumber(sale.total_amount || 0)}</td>
+                        <td><span class="badge bg-${getStatusBadgeClass(sale.status)}">${getStatusText(sale.status)}</span></td>
+                        <td><small>${sale.items_count || 0} шт.</small></td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Нет данных</td></tr>';
+            }
+        }
+
+        // Вспомогательные функции
+        function formatNumber(num) {
+            return new Intl.NumberFormat('ru-RU').format(num);
+        }
+
+        function getStatusBadgeClass(status) {
+            const statusClasses = {
+                'PENDING': 'warning', 'CONFIRMED': 'info', 'IN_PROGRESS': 'primary',
+                'COMPLETED': 'success', 'CANCELLED': 'danger'
+            };
+            return statusClasses[status] || 'secondary';
+        }
+
+        function getStatusText(status) {
+            const statusTexts = {
+                'PENDING': 'Ожидает', 'CONFIRMED': 'Подтвержден', 'IN_PROGRESS': 'В процессе',
+                'COMPLETED': 'Завершен', 'CANCELLED': 'Отменен'
+            };
+            return statusTexts[status] || status;
+        }
+
+        function showNotification(message, type) {
+            // Реализация уведомлений
+            console.log('Notification:', type, message);
+        }
+
+        async function testAllAPIs() {
+            console.log('Testing API endpoints...');
+            const endpoints = [
+                '/api/reports/monthly-revenue',
+                '/api/reports/bouquet-stats',
+                '/api/reports/user-activity',
+                '/api/reports/sales',
+                '/api/orders?size=100'
             ];
 
-            const tbody = document.getElementById('userActivity');
-            tbody.innerHTML = userActivity.map(user => `
-                <tr>
-                    <td>${user.name}</td>
-                    <td class="text-end">${user.orders}</td>
-                    <td class="text-end">₽${user.total.toLocaleString()}</td>
-                </tr>
-            `).join('');
-        }
-
-        function exportStatistics() {
-            // In real application, this would generate and download a report
-            alert('Функция экспорта статистики будет реализована в следующей версии');
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint);
+                    console.log(`${endpoint}: ${response.status}`);
+                } catch (error) {
+                    console.error(`${endpoint}: ERROR -`, error.message);
+                }
+            }
         }
     });
+    /*]]>*/
 </script>
 
 <style>
@@ -434,6 +655,19 @@
     .chart-container {
         position: relative;
     }
+
+    .card {
+        transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+    }
 </style>
+
+
 </body>
 </html>
+
+
+

@@ -1,6 +1,7 @@
 package com.flowershop.controller.api;
 
 import com.flowershop.dto.ApiResponse;
+import com.flowershop.dto.UserExportDto;
 import com.flowershop.dto.UserRegistrationDto;
 import com.flowershop.entity.User;
 import com.flowershop.service.UserService;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -23,6 +25,25 @@ public class UserApiController {
         this.userService = userService;
     }
 
+    // ДОБАВЬТЕ ЭТОТ НОВЫЙ МЕТОД ДЛЯ ЭКСПОРТА
+    @GetMapping("/export")
+    public ResponseEntity<ApiResponse<List<UserExportDto>>> exportUsers() {
+        try {
+            List<User> users = userService.findAll();
+
+            // Преобразуем в DTO для избежания проблем с lazy loading
+            List<UserExportDto> userDtos = users.stream()
+                    .map(UserExportDto::new)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(ApiResponse.success("Данные для экспорта получены", userDtos));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Ошибка при экспорте: " + e.getMessage()));
+        }
+    }
+
+    // Остальные существующие методы остаются БЕЗ ИЗМЕНЕНИЙ
     @GetMapping
     public ResponseEntity<ApiResponse<Page<User>>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
@@ -72,6 +93,7 @@ public class UserApiController {
                     .body(ApiResponse.error("Ошибка при восстановлении пользователя: " + e.getMessage()));
         }
     }
+
     @GetMapping("/active")
     public ResponseEntity<ApiResponse<List<User>>> getActiveUsers() {
         List<User> users = userService.findAllActive();

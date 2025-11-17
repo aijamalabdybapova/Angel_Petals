@@ -35,4 +35,6 @@ public interface BouquetService {
     Page<Bouquet> findByDeletedFalse(Pageable pageable);
     Page<Bouquet> findByDeletedTrue(Pageable pageable);
     Page<Bouquet> findByInStockFalse(Pageable pageable);
+    Page<Bouquet> findBySearchAndCategory(String search, Long categoryId, Pageable pageable);
+
 }

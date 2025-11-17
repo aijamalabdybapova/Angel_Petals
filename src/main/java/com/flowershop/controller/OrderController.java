@@ -1,10 +1,12 @@
 package com.flowershop.controller;
 
+import com.flowershop.dto.OrderDto;
 import com.flowershop.entity.Order;
 import com.flowershop.entity.User;
 import com.flowershop.service.OrderService;
 import com.flowershop.service.UserService;
 import com.flowershop.util.ThymeleafUtil;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +15,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -31,6 +34,7 @@ public class OrderController {
         this.userService = userService;
         this.thymeleafUtil = thymeleafUtil;
     }
+
     @ModelAttribute("getStatusBadgeClass")
     public String getStatusBadgeClass(Order.OrderStatus status) {
         if (status == null) {
@@ -66,6 +70,7 @@ public class OrderController {
                 return status.toString();
         }
     }
+
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
@@ -80,13 +85,41 @@ public class OrderController {
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
     }
 
-    private boolean isManager() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        return authorities.stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_MANAGER"));
+    // СПЕЦИФИЧНЫЕ МАРШРУТЫ - ПЕРВЫМИ
+    @GetMapping("/create")
+    public String showCreateOrderForm(Model model, Authentication authentication) {
+        try {
+            User currentUser = getCurrentUser();
+            // Используем OrderDto вместо Order entity
+            model.addAttribute("orderDto", new OrderDto());
+            return "order/create";
+        } catch (Exception e) {
+            model.addAttribute("error", "Ошибка при создании заказа: " + e.getMessage());
+            return "order/create";
+        }
     }
 
+    @PostMapping("/create")
+    public String createOrder(@ModelAttribute("orderDto") @Valid OrderDto orderDto,
+                              BindingResult result,
+                              Authentication authentication,
+                              RedirectAttributes redirectAttributes) {
+        if (result.hasErrors()) {
+            return "order/create";
+        }
+
+        try {
+            User currentUser = getCurrentUser();
+            Order order = orderService.createOrderFromCart(currentUser.getId(), orderDto);
+            redirectAttributes.addFlashAttribute("successMessage", "Заказ успешно создан! Номер заказа: " + order.getOrderNumber());
+            return "redirect:/orders";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Ошибка при создании заказа: " + e.getMessage());
+            return "redirect:/orders/create";
+        }
+    }
+
+    // ПОТОМ МАРШРУТЫ С ПАРАМЕТРАМИ
     @GetMapping
     public String listOrders(Model model,
                              @RequestParam(defaultValue = "0") int page,
@@ -95,7 +128,7 @@ public class OrderController {
         Pageable pageable = PageRequest.of(page, size);
         Page<Order> orders;
 
-        if (isAdmin() || isManager()) {
+        if (isAdmin()) {
             orders = orderService.findAll(pageable);
         } else {
             orders = orderService.findByUserId(currentUser.getId(), pageable);
@@ -107,10 +140,11 @@ public class OrderController {
 
     @GetMapping("/{id}")
     public String orderDetails(@PathVariable Long id, Model model) {
-        Order order = orderService.findById(id);
+        Order order = orderService.findByIdWithItems(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
         User currentUser = getCurrentUser();
 
-        if (!isAdmin() && !isManager() && !order.getUser().getId().equals(currentUser.getId())) {
+        if (!isAdmin() && !order.getUser().getId().equals(currentUser.getId())) {
             return "redirect:/access-denied";
         }
 

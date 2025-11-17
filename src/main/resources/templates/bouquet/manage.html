@@ -188,36 +188,48 @@
             </div>
 
             <!-- Pagination -->
+            <!-- Pagination -->
             <div class="row mt-4" th:if="${bouquets.totalPages > 1}">
                 <div class="col">
                     <nav aria-label="Page navigation">
                         <ul class="pagination justify-content-center">
+                            <!-- First Page -->
                             <li class="page-item" th:classappend="${bouquets.first} ? 'disabled' : ''">
-                                <a class="page-link" th:href="@{/bouquets/manage(page=0)}">
+                                <a class="page-link"
+                                   th:href="@{/bouquets/manage(page=0, search=${search}, status=${statusParam}, category=${categoryParam})}">
                                     <i class="fas fa-angle-double-left"></i>
                                 </a>
                             </li>
+
+                            <!-- Previous Page -->
                             <li class="page-item" th:classappend="${bouquets.first} ? 'disabled' : ''">
-                                <a class="page-link" th:href="@{/bouquets/manage(page=${bouquets.number - 1})}">
+                                <a class="page-link"
+                                   th:href="@{/bouquets/manage(page=${bouquets.number - 1}, search=${search}, status=${statusParam}, category=${categoryParam})}">
                                     <i class="fas fa-angle-left"></i>
                                 </a>
                             </li>
 
+                            <!-- Page Numbers -->
                             <li th:each="page : ${#numbers.sequence(0, bouquets.totalPages - 1)}"
                                 class="page-item"
                                 th:classappend="${page == bouquets.number} ? 'active' : ''">
                                 <a class="page-link"
-                                   th:href="@{/bouquets/manage(page=${page})}"
+                                   th:href="@{/bouquets/manage(page=${page}, search=${search}, status=${statusParam}, category=${categoryParam})}"
                                    th:text="${page + 1}">1</a>
                             </li>
 
+                            <!-- Next Page -->
                             <li class="page-item" th:classappend="${bouquets.last} ? 'disabled' : ''">
-                                <a class="page-link" th:href="@{/bouquets/manage(page=${bouquets.number + 1})}">
+                                <a class="page-link"
+                                   th:href="@{/bouquets/manage(page=${bouquets.number + 1}, search=${search}, status=${statusParam}, category=${categoryParam})}">
                                     <i class="fas fa-angle-right"></i>
                                 </a>
                             </li>
+
+                            <!-- Last Page -->
                             <li class="page-item" th:classappend="${bouquets.last} ? 'disabled' : ''">
-                                <a class="page-link" th:href="@{/bouquets/manage(page=${bouquets.totalPages - 1})}">
+                                <a class="page-link"
+                                   th:href="@{/bouquets/manage(page=${bouquets.totalPages - 1}, search=${search}, status=${statusParam}, category=${categoryParam})}">
                                     <i class="fas fa-angle-double-right"></i>
                                 </a>
                             </li>
@@ -227,6 +239,7 @@
                     <div class="text-center text-muted mt-2">
                         Показано <span th:text="${bouquets.numberOfElements}">0</span> из
                         <span th:text="${bouquets.totalElements}">0</span> букетов
+                        <span th:if="${search != null}"> по запросу "<span th:text="${search}"></span>"</span>
                     </div>
                 </div>
             </div>
@@ -236,127 +249,160 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-    // Search functionality
-    const searchInput = document.getElementById('searchInput');
-    const searchButton = document.getElementById('searchButton');
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
 
-    searchButton.addEventListener('click', function() {
-        const query = searchInput.value.trim();
-        if (query) {
-            window.location.href = `/bouquets/manage?search=${encodeURIComponent(query)}`;
-        } else {
-            window.location.href = '/bouquets/manage';
+        if (searchButton && searchInput) {
+            searchButton.addEventListener('click', function() {
+                const query = searchInput.value ? searchInput.value.trim() : '';
+                if (query) {
+                    window.location.href = `/bouquets/manage?search=${encodeURIComponent(query)}`;
+                } else {
+                    window.location.href = '/bouquets/manage';
+                }
+            });
+
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchButton.click();
+                }
+            });
         }
-    });
 
-    searchInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            searchButton.click();
+        // Filter functionality
+        const statusFilter = document.getElementById('statusFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const resetFilters = document.getElementById('resetFilters');
+
+        if (statusFilter) {
+            statusFilter.addEventListener('change', applyFilters);
         }
-    });
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', applyFilters);
+        }
+        if (resetFilters) {
+            resetFilters.addEventListener('click', function() {
+                if (statusFilter) statusFilter.value = '';
+                if (categoryFilter) categoryFilter.value = '';
+                window.location.href = '/bouquets/manage';
+            });
+        }
 
-    // Filter functionality
-    const statusFilter = document.getElementById('statusFilter');
-    const categoryFilter = document.getElementById('categoryFilter');
-    const resetFilters = document.getElementById('resetFilters');
+        function applyFilters() {
+            const status = statusFilter ? statusFilter.value : '';
+            const category = categoryFilter ? categoryFilter.value : '';
+            const search = searchInput ? searchInput.value.trim() : '';
 
-    statusFilter.addEventListener('change', applyFilters);
-    categoryFilter.addEventListener('change', applyFilters);
+            let url = '/bouquets/manage?';
+            const params = [];
 
-    resetFilters.addEventListener('click', function() {
-        statusFilter.value = '';
-        categoryFilter.value = '';
-        window.location.href = '/bouquets/manage';
-    });
+            if (search) params.push(`search=${encodeURIComponent(search)}`);
+            if (status) params.push(`status=${status}`);
+            if (category) params.push(`category=${category}`);
 
-    function applyFilters() {
-        const status = statusFilter.value;
-        const category = categoryFilter.value;
+            window.location.href = url + params.join('&');
+        }
 
-        let url = '/bouquets/manage?';
-        const params = [];
-
-        if (status) params.push(`status=${status}`);
-        if (category) params.push(`category=${category}`);
-
-        window.location.href = url + params.join('&');
-    }
-
-    // Delete bouquet
-    document.querySelectorAll('.delete-bouquet').forEach(button => {
-        button.addEventListener('click', function() {
-            const bouquetId = this.getAttribute('data-bouquet-id');
-            deleteBouquet(bouquetId);
+        // Delete bouquet
+        document.querySelectorAll('.delete-bouquet').forEach(button => {
+            button.addEventListener('click', function() {
+                const bouquetId = this.getAttribute('data-bouquet-id');
+                if (bouquetId) {
+                    deleteBouquet(bouquetId);
+                }
+            });
         });
-    });
 
-    // Restore bouquet
-    document.querySelectorAll('.restore-bouquet').forEach(button => {
-        button.addEventListener('click', function() {
-            const bouquetId = this.getAttribute('data-bouquet-id');
-            restoreBouquet(bouquetId);
+        // Restore bouquet
+        document.querySelectorAll('.restore-bouquet').forEach(button => {
+            button.addEventListener('click', function() {
+                const bouquetId = this.getAttribute('data-bouquet-id');
+                if (bouquetId) {
+                    restoreBouquet(bouquetId);
+                }
+            });
         });
-    });
 
-    function deleteBouquet(bouquetId) {
-        if (!confirm('Вы уверены, что хотите удалить этот букет?')) return;
+        function deleteBouquet(bouquetId) {
+            if (!confirm('Вы уверены, что хотите удалить этот букет?')) return;
 
-        fetch(`/api/bouquets/${bouquetId}`, {
-            method: 'DELETE'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showAlert('Букет успешно удален', 'success');
-                setTimeout(() => location.reload(), 1000);
-            } else {
+            fetch(`/api/bouquets/${bouquetId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showAlert('Букет успешно удален', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert(data.message || 'Ошибка при удалении букета', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
                 showAlert('Ошибка при удалении букета', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('Ошибка при удалении букета', 'error');
-        });
-    }
+            });
+        }
 
-    function restoreBouquet(bouquetId) {
-        fetch(`/api/bouquets/${bouquetId}/restore`, {
-            method: 'POST'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showAlert('Букет успешно восстановлен', 'success');
-                setTimeout(() => location.reload(), 1000);
-            } else {
+        function restoreBouquet(bouquetId) {
+            fetch(`/api/bouquets/${bouquetId}/restore`, {
+                method: 'POST'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showAlert('Букет успешно восстановлен', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert(data.message || 'Ошибка при восстановлении букета', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
                 showAlert('Ошибка при восстановлении букета', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('Ошибка при восстановлении букета', 'error');
-        });
-    }
+            });
+        }
 
-    function showAlert(message, type) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
-        alertDiv.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle me-2"></i>
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
+        function showAlert(message, type) {
+            // Удаляем существующие уведомления
+            const existingAlerts = document.querySelectorAll('.alert.position-fixed');
+            existingAlerts.forEach(alert => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            });
 
-        document.body.appendChild(alertDiv);
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
 
-        setTimeout(() => {
-            if (alertDiv.parentNode) {
-                alertDiv.remove();
-            }
-        }, 3000);
-    }
-});
+            const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+            alertDiv.innerHTML = `
+                <i class="fas fa-${icon} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(alertDiv);
+
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 3000);
+        }
+    });
 </script>
 </body>
 </html>

@@ -12,7 +12,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -84,7 +87,8 @@ public class OrderApiController {
         return ResponseEntity.ok(ApiResponse.success("Заказы по статусу", orders));
     }
 
-    @PutMapping("/{id}/status")
+    // OrderApiController.java - измените этот метод
+    @PostMapping("/{id}/status") // Измените с @PutMapping на @PostMapping
     public ResponseEntity<ApiResponse<Void>> updateOrderStatus(@PathVariable Long id,
                                                                @RequestParam String status) {
         try {
@@ -117,6 +121,46 @@ public class OrderApiController {
     public ResponseEntity<ApiResponse<List<Order>>> searchOrders(@RequestParam String query) {
         List<Order> orders = orderService.searchOrders(query);
         return ResponseEntity.ok(ApiResponse.success("Результаты поиска заказов", orders));
+    }
+    @GetMapping("/status-stats")
+    public ResponseEntity<Map<String, Object>> getOrderStatusStats() {
+        try {
+            System.out.println("=== ORDER STATUS STATS API CALLED ===");
+
+            Map<String, Long> statusCounts = new HashMap<>();
+
+            // Получаем количество заказов по каждому статусу
+            for (Order.OrderStatus status : Order.OrderStatus.values()) {
+                Long count = orderService.countByStatus(status);
+                statusCounts.put(status.name(), count);
+            }
+
+
+            List<Map<String, Object>> stats = statusCounts.entrySet().stream()
+                    .map(entry -> {
+                        Map<String, Object> stat = new HashMap<>();
+                        stat.put("status", entry.getKey());
+                        stat.put("count", entry.getValue());
+                        return stat;
+                    })
+                    .collect(Collectors.toList());
+
+            System.out.println("Order status stats: " + stats);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", stats);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.out.println("Error in order-status-stats: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Ошибка при получении статистики статусов: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
     }
 
     @GetMapping("/date-range")

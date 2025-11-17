@@ -80,7 +80,7 @@
                             <li><hr class="dropdown-divider"></li>
 
                             <!-- Для менеджеров и админов -->
-                            <div sec:authorize="hasAnyRole('MANAGER', 'ADMIN')">
+                            <div sec:authorize="hasAnyRole('ADMIN')">
                                 <li>
                                     <a class="dropdown-item" th:href="@{/bouquets/manage}">
                                         <i class="fas fa-cog me-2"></i>Управление букетами
@@ -217,17 +217,32 @@
     });
 
     async function updateCartCounter() {
-        try {
-            const response = await fetch('/flowershop/api/cart/count');
-            const result = await response.json();
+    try {
+        const response = await fetch('/api/cart/count');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const result = await response.json();
 
-            if (result.success) {
-                document.getElementById('cartCounter').textContent = result.data;
+        if (result.success) {
+            const counter = document.getElementById('cartCounter');
+            if (counter) {
+                counter.textContent = result.data;
+                counter.style.display = result.data > 0 ? 'inline' : 'none';
             }
-        } catch (error) {
-            console.error('Error updating cart counter:', error);
+        }
+    } catch (error) {
+        console.error('Error updating cart counter:', error);
+        // Fallback to localStorage if API fails
+        const cart = JSON.parse(localStorage.getItem('flowerShopCart')) || [];
+        const count = cart.reduce((total, item) => total + item.quantity, 0);
+        const counter = document.getElementById('cartCounter');
+        if (counter) {
+            counter.textContent = count;
+            counter.style.display = count > 0 ? 'inline' : 'none';
         }
     }
+}
 </script>
 </body>
 </html>

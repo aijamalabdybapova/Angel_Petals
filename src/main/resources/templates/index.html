@@ -169,60 +169,21 @@
         </div>
     </section>
 </div>
+
 <script>
-    // Глобальные функции
-    async function addToCart(bouquetId) {
-        console.log('addToCart function called with bouquetId:', bouquetId);
-
-        try {
-            const requestData = {
-                bouquetId: parseInt(bouquetId),
-                quantity: 1
-            };
-
-            console.log('Request data:', requestData);
-
-            const response = await fetch('/api/cart/add', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestData)
-            });
-
-            console.log('Response status:', response.status);
-
-            if (response.status === 401) {
-                showAlert('Для добавления в корзину необходимо войти в систему', 'error');
-                return;
-            }
-
-            const result = await response.json();
-            console.log('Response data:', result);
-
-            if (result.success) {
-                showAlert('Букет добавлен в корзину!', 'success');
-                updateCartCounter();
-            } else {
-                showAlert('Ошибка: ' + result.message, 'error');
-            }
-        } catch (error) {
-            console.error('Fetch error:', error);
-            showAlert('Ошибка при добавлении в корзину: ' + error.message, 'error');
-        }
-    }
-
-    function showAlert(message, type) {
-        // ... код showAlert из предыдущего примера
-    }
-
-    async function updateCartCounter() {
-        // ... код updateCartCounter из предыдущего примера
-    }
-
-    // Инициализация при загрузке
+    // Используем функции из main.js вместо дублирования
     document.addEventListener('DOMContentLoaded', function() {
-        updateCartCounter();
+        // Обработчики для кнопок добавления в корзину
+        document.querySelectorAll('.add-to-cart').forEach(button => {
+            button.addEventListener('click', function() {
+                const bouquetId = this.getAttribute('data-bouquet-id');
+                if (window.FlowerShop && window.FlowerShop.addToCart) {
+                    window.FlowerShop.addToCart(bouquetId, 1);
+                } else {
+                    console.error('FlowerShop not initialized');
+                }
+            });
+        });
     });
 </script>
 </body>

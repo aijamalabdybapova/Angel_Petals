@@ -2,6 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{fragments/header}">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 <head>
     <title>Корзина - Цветочный магазин</title>
 </head>
@@ -28,6 +30,7 @@
                     </h1>
                 </div>
             </div>
+
 
             <!-- Error Message -->
             <div class="row" th:if="${error}">

@@ -31,11 +31,27 @@ public class CartDto {
     public List<CartItemDto> getItems() { return items; }
     public void setItems(List<CartItemDto> items) {
         this.items = items;
-        this.totalItems = items.stream()
-                .mapToInt(CartItemDto::getQuantity)
-                .sum();
+        // Убедитесь, что totalItems всегда рассчитывается
+        calculateTotalItems();
     }
 
-    public Integer getTotalItems() { return totalItems; }
-    public void setTotalItems(Integer totalItems) { this.totalItems = totalItems; }
+    public Integer getTotalItems() {
+        // Всегда пересчитываем при запросе
+        calculateTotalItems();
+        return totalItems;
+    }
+
+    public void setTotalItems(Integer totalItems) {
+        this.totalItems = totalItems;
+    }
+
+    private void calculateTotalItems() {
+        if (items == null) {
+            this.totalItems = 0;
+        } else {
+            this.totalItems = items.stream()
+                    .mapToInt(item -> item.getQuantity() != null ? item.getQuantity() : 0)
+                    .sum();
+        }
+    }
 }

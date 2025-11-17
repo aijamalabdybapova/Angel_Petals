@@ -59,7 +59,12 @@ public class Cart extends BaseEntity {
         items.clear();
         totalAmount = BigDecimal.ZERO;
     }
-
+        public Integer getTotalItems() {
+        if (items == null) return 0;
+        return items.stream()
+                .mapToInt(CartItem::getQuantity)
+                .sum();
+    }
     // Getters and Setters
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }

@@ -149,8 +149,8 @@
                                             ₽2,500.00
                                         </td>
                                         <td>
-                                            <span th:classappend="'badge bg-' + ${getStatusBadgeClass(order.status)}"
-                                                  th:text="${getStatusText(order.status)}">
+                                            <span th:classappend="'badge bg-' + ${@adminController.getStatusBadgeClass(order.status)}"
+                                                  th:text="${@adminController.getStatusText(order.status)}">
                                                 Обрабатывается
                                             </span>
                                         </td>
@@ -188,6 +188,12 @@
                                 </a>
                                 <a th:href="@{/bouquets/manage}" class="btn btn-outline-warning text-start">
                                     <i class="fas fa-cog me-2"></i>Управление букетами
+                                </a>
+                                <a th:href="@{/admin/analytics}" class="btn btn-outline-info text-start">
+                                    <i class="fas fa-chart-bar me-2"></i>Аналитика и отчеты
+                                </a>
+                                <a th:href="@{/admin/audit}" class="btn btn-outline-dark text-start">
+                                    <i class="fas fa-history me-2"></i>Журнал аудита
                                 </a>
                             </div>
                         </div>
@@ -229,27 +235,8 @@
 
 <script th:inline="javascript">
     /*<![CDATA[*/
-    function getStatusBadgeClass(status) {
-        switch (status) {
-            case 'PENDING': return 'warning';
-            case 'CONFIRMED': return 'info';
-            case 'IN_PROGRESS': return 'primary';
-            case 'COMPLETED': return 'success';
-            case 'CANCELLED': return 'danger';
-            default: return 'secondary';
-        }
-    }
 
-    function getStatusText(status) {
-        switch (status) {
-            case 'PENDING': return 'Ожидает';
-            case 'CONFIRMED': return 'Подтвержден';
-            case 'IN_PROGRESS': return 'В процессе';
-            case 'COMPLETED': return 'Завершен';
-            case 'CANCELLED': return 'Отменен';
-            default: return status;
-        }
-    }
+
 
     // Simple uptime counter
     document.addEventListener('DOMContentLoaded', function() {

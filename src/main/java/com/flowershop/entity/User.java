@@ -9,8 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.flowershop.listener.JpaAuditListener;
+import jakarta.persistence.*;
+
 @Entity
 @Table(name = "users")
+@EntityListeners(JpaAuditListener.class)
 public class User extends BaseEntity {
 
     @NotBlank(message = "Имя пользователя обязательно")

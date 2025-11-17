@@ -1,5 +1,6 @@
 package com.flowershop.entity;
 
+import com.flowershop.listener.JpaAuditListener;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -8,6 +9,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "categories")
+@EntityListeners(JpaAuditListener.class)
 public class Category extends BaseEntity {
 
     @NotBlank(message = "Название категории обязательно")

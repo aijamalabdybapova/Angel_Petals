@@ -10,7 +10,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import com.flowershop.entity.UserRole;
 
 @Configuration
 @EnableWebSecurity
@@ -39,31 +38,25 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authz -> authz
-                        // Public pages
-                        .requestMatchers(
-                                "/", "/home", "/bouquets", "/bouquets/**",
-                                "/css/**", "/js/**", "/images/**", "/uploads/**",
-                                "/register", "/login", "/error", "/api/**"
-                        ).permitAll()
+                // Public pages - доступны всем (неавторизованным пользователям)
+                .requestMatchers(
+                        "/", "/home", "/bouquets", "/bouquets/**",
+                        "/css/**", "/js/**", "/images/**", "/uploads/**",
+                        "/register", "/login", "/error", "/api/**"
+                ).permitAll()
 
-                        // User pages
-                        .requestMatchers(
-                                "/profile", "/orders/**", "/cart/**"
-                        ).hasAnyRole("USER", "MANAGER", "ADMIN")
+                // User pages - доступны авторизованным пользователям
+                .requestMatchers(
+                        "/profile", "/orders/**", "/cart/**"
+                ).hasAnyRole("USER", "ADMIN")
 
-                        // Manager pages
-                        .requestMatchers(
-                                "/manager/**", "/bouquets/create", "/bouquets/edit/**",
-                                "/orders", "/reviews"
-                        ).hasAnyRole("MANAGER", "ADMIN")
+                // Admin pages - доступны только администраторам
+                .requestMatchers(
+                        "/admin/**"  // УДАЛИТЬ все остальные правила - этого достаточно
+                ).hasRole("ADMIN")
 
-                        // Admin pages
-                        .requestMatchers(
-                                "/admin/**", "/users/**"
-                        ).hasRole("ADMIN")
-
-                        .anyRequest().authenticated()
-                )
+                .anyRequest().authenticated()
+        )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
@@ -88,5 +81,4 @@ public class SecurityConfig {
 
         return http.build();
     }
-
 }

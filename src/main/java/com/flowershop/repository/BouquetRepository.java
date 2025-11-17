@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BouquetRepository extends JpaRepository<Bouquet, Long> {
@@ -18,6 +19,21 @@ public interface BouquetRepository extends JpaRepository<Bouquet, Long> {
     List<Bouquet> findByInStockTrue();
     List<Bouquet> findByCategory(Category category);
     List<Bouquet> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice);
+    @Query("SELECT b FROM Bouquet b LEFT JOIN FETCH b.category WHERE b.inStock = true AND b.deleted = false")
+    Page<Bouquet> findActiveBouquetsWithCategory(Pageable pageable);
+
+    @Query("SELECT b FROM Bouquet b LEFT JOIN FETCH b.category WHERE b.category.id = :categoryId AND b.inStock = true AND b.deleted = false")
+    Page<Bouquet> findByCategoryIdWithCategory(@Param("categoryId") Long categoryId, Pageable pageable);
+
+    @Query("SELECT b FROM Bouquet b LEFT JOIN FETCH b.category WHERE (LOWER(b.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(b.description) LIKE LOWER(CONCAT('%', :search, '%'))) AND b.inStock = true AND b.deleted = false")
+    Page<Bouquet> searchWithCategory(@Param("search") String search, Pageable pageable);
+
+    @Query("SELECT b FROM Bouquet b LEFT JOIN FETCH b.category WHERE b.category.id = :categoryId AND (LOWER(b.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(b.description) LIKE LOWER(CONCAT('%', :search, '%'))) AND b.inStock = true AND b.deleted = false")
+    Page<Bouquet> findByCategoryIdAndSearchWithCategory(
+            @Param("categoryId") Long categoryId, @Param("search") String search, Pageable pageable);
+
+    @Query("SELECT b FROM Bouquet b LEFT JOIN FETCH b.category WHERE b.id = :id")
+    Optional<Bouquet> findByIdWithCategory(@Param("id") Long id);
 
     @Query("SELECT b FROM Bouquet b WHERE b.deleted = false")
     List<Bouquet> findAllActive();
@@ -34,6 +50,9 @@ public interface BouquetRepository extends JpaRepository<Bouquet, Long> {
     @Query("SELECT b FROM Bouquet b WHERE b.category.id = :categoryId AND b.inStock = true AND b.deleted = false")
     Page<Bouquet> findByCategoryIdAndInStock(@Param("categoryId") Long categoryId, Pageable pageable);
 
+    @Query("SELECT b FROM Bouquet b LEFT JOIN FETCH b.category")
+    Page<Bouquet> findAllWithCategory(Pageable pageable);
+
     @Query("SELECT b FROM Bouquet b WHERE b.price BETWEEN :minPrice AND :maxPrice AND b.inStock = true AND b.deleted = false")
     Page<Bouquet> findByPriceRange(@Param("minPrice") BigDecimal minPrice, @Param("maxPrice") BigDecimal maxPrice, Pageable pageable);
 
@@ -47,6 +66,14 @@ public interface BouquetRepository extends JpaRepository<Bouquet, Long> {
     @Query("SELECT b FROM Bouquet b WHERE b.category.id = :categoryId AND (LOWER(b.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(b.description) LIKE LOWER(CONCAT('%', :search, '%'))) AND b.inStock = true AND b.deleted = false")
     Page<Bouquet> findByCategoryIdAndNameContainingIgnoreCaseAndInStockTrueAndDeletedFalse(
             @Param("categoryId") Long categoryId, @Param("search") String search, Pageable pageable);
+
+    @Query("SELECT b FROM Bouquet b LEFT JOIN FETCH b.category WHERE " +
+            "(LOWER(b.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(b.description) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+            "b.category.id = :categoryId")
+    Page<Bouquet> findBySearchAndCategory(@Param("search") String search,
+                                          @Param("categoryId") Long categoryId,
+                                          Pageable pageable);
 
     // Методы для админки
     Page<Bouquet> findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(String name, String description, Pageable pageable);

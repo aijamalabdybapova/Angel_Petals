@@ -1,6 +1,8 @@
 package com.flowershop.exception;
 
 import com.flowershop.dto.ApiResponse;
+import org.hibernate.TransactionException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -44,6 +46,25 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<String>> handleRuntimeException(RuntimeException ex) {
         ApiResponse<String> response = ApiResponse.error("Ошибка: " + ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+    // ДОБАВЬТЕ эти методы в GlobalExceptionHandler.java
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ApiResponse<String>> handleDataAccessException(DataAccessException ex) {
+        ApiResponse<String> response = ApiResponse.error("Ошибка доступа к данным: " + ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(TransactionException.class)
+    public ResponseEntity<ApiResponse<String>> handleTransactionException(TransactionException ex) {
+        ApiResponse<String> response = ApiResponse.error("Ошибка транзакции: " + ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<String>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        ApiResponse<String> response = ApiResponse.error("Некорректные параметры: " + ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 }

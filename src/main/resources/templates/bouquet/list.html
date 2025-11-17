@@ -5,66 +5,6 @@
       layout:decorate="~{fragments/header}">
 <head>
     <title>Каталог букетов - Цветочный магазин</title>
-    <style>
-        .bouquet-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: 100%;
-        }
-
-        .bouquet-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-
-        .card-img-container {
-            position: relative;
-            overflow: hidden;
-            height: 250px;
-        }
-
-        .card-img-top {
-            height: 100%;
-            width: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-
-        .bouquet-card:hover .card-img-top {
-            transform: scale(1.05);
-        }
-
-        .card-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .bouquet-card:hover .card-overlay {
-            opacity: 1;
-        }
-
-        .card-body {
-            display: flex;
-            flex-direction: column;
-            height: calc(100% - 250px);
-        }
-
-        .description-text {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            min-height: 4.5em;
-        }
-    </style>
 </head>
 <body>
 <div layout:fragment="content">
@@ -73,74 +13,65 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <h1 class="h2 mb-0">Каталог букетов</h1>
+                    <h1 class="h2 mb-0">
+                        <i class="fas fa-bouquet me-2"></i>Каталог букетов
+                    </h1>
                     <p class="text-muted mb-0">Выберите идеальный букет для любого случая</p>
                 </div>
                 <div class="col-md-6 text-end">
-                    <div class="btn-group" sec:authorize="hasAnyRole('MANAGER', 'ADMIN')">
-                        <a th:href="@{/bouquets/manage}" class="btn btn-outline-primary">
-                            <i class="fas fa-cog me-2"></i>Управление
-                        </a>
-                        <a th:href="@{/bouquets/create}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Добавить букет
-                        </a>
-                    </div>
+                    <span class="text-muted" th:text="'Найдено ' + ${bouquets.totalElements} + ' букетов'"></span>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Filters and Search -->
+    <!-- Search and Filters Form -->
+    <!-- Search and Filters Form -->
     <section class="py-3 border-bottom">
         <div class="container">
-            <!-- УБЕРИТЕ СКРЫТЫЕ ПОЛЯ И ИСПОЛЬЗУЙТЕ ПРОСТУЮ ФОРМУ -->
-            <form method="get" th:action="@{/bouquets}" class="row g-3" id="filterForm">
-                <div class="col-md-3">
-                    <label for="categoryId" class="form-label">Категория</label>
-                    <select class="form-select" id="categoryId" name="categoryId">
-                        <option value="">Все категории</option>
-                        <option th:each="category : ${categories}"
-                                th:value="${category.id}"
-                                th:text="${category.name}"
-                                th:selected="${selectedCategory == category.id}">
-                        </option>
-                    </select>
-                </div>
-
+            <form id="filterForm" th:action="@{/bouquets}" method="get" class="row g-3 align-items-center">
+                <!-- Поиск -->
                 <div class="col-md-4">
-                    <label for="search" class="form-label">Поиск</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="search" name="search"
-                               placeholder="Поиск букетов..." th:value="${search}">
+                        <input type="text" class="form-control" placeholder="Поиск букетов..."
+                               name="search" th:value="${search}" id="searchInput">
                         <button class="btn btn-outline-primary" type="submit">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
                 </div>
 
+                <!-- Категория -->
                 <div class="col-md-3">
-                    <label for="sort" class="form-label">Сортировка</label>
-                    <select class="form-select" id="sort" name="sort">
+                    <select class="form-select" name="categoryId" id="categoryFilter">
+                        <option value="">Все категории</option>
+                        <option th:each="category : ${categories}"
+                                th:value="${category.id}"
+                                th:selected="${selectedCategory == category.id}"
+                                th:text="${category.name}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Сортировка -->
+                <div class="col-md-3">
+                    <select class="form-select" name="sort" id="sortFilter">
                         <option value="name" th:selected="${currentSort == 'name'}">По названию</option>
                         <option value="price" th:selected="${currentSort == 'price'}">По цене</option>
                         <option value="createdAt" th:selected="${currentSort == 'createdAt'}">По новизне</option>
                     </select>
                 </div>
 
+                <!-- Направление сортировки -->
                 <div class="col-md-2">
-                    <label for="direction" class="form-label">Направление</label>
-                    <select class="form-select" id="direction" name="direction">
-                        <option value="asc" th:selected="${currentDirection == 'asc'}">По возрастанию</option>
-                        <option value="desc" th:selected="${currentDirection == 'desc'}">По убыванию</option>
+                    <select class="form-select" name="direction" id="directionFilter">
+                        <option value="asc" th:selected="${currentDirection == 'asc'}">Возрастание</option>
+                        <option value="desc" th:selected="${currentDirection == 'desc'}">Убывание</option>
                     </select>
                 </div>
 
-                <div class="col-12">
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">Применить фильтры</button>
-                        <a th:href="@{/bouquets}" class="btn btn-outline-secondary">Сбросить</a>
-                    </div>
-                </div>
+                <!-- Скрытые поля -->
+                <input type="hidden" name="page" id="pageInput" th:value="${bouquets.number}">
             </form>
         </div>
     </section>
@@ -148,111 +79,87 @@
     <!-- Bouquets Grid -->
     <section class="py-5">
         <div class="container">
-            <!-- No Results Message -->
+            <!-- No Bouquets Message -->
             <div class="row" th:if="${bouquets.empty}">
                 <div class="col text-center">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle fa-2x mb-3"></i>
+                    <div class="alert alert-info py-5">
+                        <i class="fas fa-bouquet fa-3x text-muted mb-3"></i>
                         <h4>Букеты не найдены</h4>
-                        <p class="mb-0">Попробуйте изменить параметры поиска или фильтрации</p>
+                        <p class="mb-3" th:if="${search != null}">По запросу "<span th:text="${search}"></span>" ничего не найдено</p>
+                        <p class="mb-3" th:unless="${search != null}">Попробуйте изменить параметры поиска</p>
+                        <button class="btn btn-primary" onclick="resetFilters()">
+                            <i class="fas fa-redo me-2"></i>Сбросить фильтры
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Bouquets -->
+            <!-- Bouquets Grid -->
             <div class="row g-4" th:unless="${bouquets.empty}">
                 <div class="col-sm-6 col-lg-4 col-xl-3" th:each="bouquet : ${bouquets.content}">
-                    <div class="card bouquet-card shadow-sm border-0">
+                    <div class="card bouquet-card shadow-sm border-0 h-100">
                         <div class="card-img-container">
                             <img th:src="${bouquet.imageUrl != null} ?
-                                    @{'/uploads/' + ${bouquet.imageUrl}} :
-                                    @{/images/default-bouquet.jpg}"
+                                @{'/uploads/' + ${bouquet.imageUrl}} :
+                                @{/images/default-bouquet.jpg}"
                                  class="card-img-top"
                                  th:alt="${bouquet.name}"
                                  onerror="this.src='/images/default-bouquet.jpg'">
-
-                            <!-- Stock Badge -->
-                            <div class="position-absolute top-0 end-0 m-2">
-                                <span th:if="${bouquet.inStock}"
-                                      class="badge bg-success">
-                                    <i class="fas fa-check me-1"></i>В наличии
-                                </span>
-                                <span th:unless="${bouquet.inStock}"
-                                      class="badge bg-danger">
-                                    <i class="fas fa-times me-1"></i>Нет в наличии
-                                </span>
-                            </div>
-
-                            <!-- Category Badge -->
-                            <div class="position-absolute top-0 start-0 m-2">
-                                <span th:if="${bouquet.category != null}"
-                                      class="badge bg-primary">
-                                    <i class="fas fa-tag me-1"></i>
-                                    <span th:text="${bouquet.category.name}"></span>
-                                </span>
+                            <div class="card-overlay" th:if="${!bouquet.inStock}">
+                                <span class="badge bg-danger">Нет в наличии</span>
                             </div>
                         </div>
-
-                        <div class="card-body">
+                        <div class="card-body d-flex flex-column">
                             <h5 class="card-title" th:text="${bouquet.name}">Название букета</h5>
-                            <p class="card-text text-muted small description-text"
+                            <p class="card-text flex-grow-1 text-muted small description-text"
                                th:text="${bouquet.description ?: 'Описание отсутствует'}">
                                 Описание букета
                             </p>
-
                             <div class="mt-auto">
-                                <!-- Price and Stock -->
-                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex justify-content-between align-items-center">
                                     <span class="h5 text-primary mb-0"
                                           th:text="'₽' + ${#numbers.formatDecimal(bouquet.price, 0, 'COMMA', 2, 'POINT')}">
                                         2500
                                     </span>
-                                    <small class="text-muted" th:if="${bouquet.stockQuantity > 0}">
-                                        Осталось: <span th:text="${bouquet.stockQuantity}"></span>
-                                    </small>
+                                    <div class="btn-group">
+                                        <a th:href="@{/bouquets/{id}(id=${bouquet.id})}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button th:if="${bouquet.inStock}"
+                                                class="btn btn-sm btn-primary add-to-cart"
+                                                th:data-bouquet-id="${bouquet.id}">
+                                            <i class="fas fa-cart-plus"></i>
+                                        </button>
+                                    </div>
                                 </div>
-
-                                <!-- Action Buttons -->
-                                <div class="btn-group w-100">
-                                    <a th:href="@{/bouquets/{id}(id=${bouquet.id})}"
-                                       class="btn btn-outline-primary btn-sm">
-                                        <i class="fas fa-eye me-1"></i>Подробнее
-                                    </a>
-                                    <button class="btn btn-primary add-to-cart-btn"
-                                            th:data-bouquet-id="${bouquet.id}"
-                                            onclick="addToCart(this)">
-                                        <i class="fas fa-cart-plus me-2"></i>В корзину
-                                    </button>
-                                    <button th:unless="${bouquet.inStock}"
-                                            class="btn btn-secondary btn-sm" disabled>
-                                        <i class="fas fa-cart-plus me-1"></i>Нет в наличии
-                                    </button>
-                                </div>
+                                <small class="text-muted" th:if="${bouquet.category != null}">
+                                    <i class="fas fa-tag me-1"></i>
+                                    <span th:text="${bouquet.category.name}">Категория</span>
+                                </small>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Пагинация с сохранением параметров -->
-            <div class="row mt-5" th:if="${bouquets.totalPages > 1}">
+            <!-- Pagination -->
+            <div class="row mt-4" th:if="${bouquets.totalPages > 1}">
                 <div class="col">
                     <nav aria-label="Page navigation">
                         <ul class="pagination justify-content-center">
                             <!-- First Page -->
                             <li class="page-item" th:classappend="${bouquets.first} ? 'disabled' : ''">
-                                <a class="page-link"
-                                   th:with="params=${T(org.springframework.web.servlet.support.ServletUriComponentsBuilder).fromCurrentRequest().replaceQueryParam('page', 0).build().getQuery()}"
-                                   th:href="@{/bouquets?(page=0,${params})}">
+                                <a class="page-link pagination-link"
+                                   th:href="@{/bouquets(page=0, search=${search}, categoryId=${selectedCategory}, sort=${currentSort}, direction=${currentDirection})}">
                                     <i class="fas fa-angle-double-left"></i>
                                 </a>
                             </li>
 
                             <!-- Previous Page -->
                             <li class="page-item" th:classappend="${bouquets.first} ? 'disabled' : ''">
-                                <a class="page-link"
-                                   th:with="prevPage=${bouquets.number - 1}, params=${T(org.springframework.web.servlet.support.ServletUriComponentsBuilder).fromCurrentRequest().replaceQueryParam('page', bouquets.number - 1).build().getQuery()}"
-                                   th:href="@{/bouquets?(page=${prevPage},${params})}">
+                                <a class="page-link pagination-link"
+                                   th:href="@{/bouquets(page=${bouquets.number - 1}, search=${search}, categoryId=${selectedCategory}, sort=${currentSort}, direction=${currentDirection})}">
                                     <i class="fas fa-angle-left"></i>
                                 </a>
                             </li>
@@ -261,26 +168,23 @@
                             <li th:each="page : ${#numbers.sequence(0, bouquets.totalPages - 1)}"
                                 class="page-item"
                                 th:classappend="${page == bouquets.number} ? 'active' : ''">
-                                <a class="page-link"
-                                   th:with="params=${T(org.springframework.web.servlet.support.ServletUriComponentsBuilder).fromCurrentRequest().replaceQueryParam('page', page).build().getQuery()}"
-                                   th:href="@{/bouquets?(page=${page},${params})}"
+                                <a class="page-link pagination-link"
+                                   th:href="@{/bouquets(page=${page}, search=${search}, categoryId=${selectedCategory}, sort=${currentSort}, direction=${currentDirection})}"
                                    th:text="${page + 1}">1</a>
                             </li>
 
                             <!-- Next Page -->
                             <li class="page-item" th:classappend="${bouquets.last} ? 'disabled' : ''">
-                                <a class="page-link"
-                                   th:with="nextPage=${bouquets.number + 1}, params=${T(org.springframework.web.servlet.support.ServletUriComponentsBuilder).fromCurrentRequest().replaceQueryParam('page', bouquets.number + 1).build().getQuery()}"
-                                   th:href="@{/bouquets?(page=${nextPage},${params})}">
+                                <a class="page-link pagination-link"
+                                   th:href="@{/bouquets(page=${bouquets.number + 1}, search=${search}, categoryId=${selectedCategory}, sort=${currentSort}, direction=${currentDirection})}">
                                     <i class="fas fa-angle-right"></i>
                                 </a>
                             </li>
 
                             <!-- Last Page -->
                             <li class="page-item" th:classappend="${bouquets.last} ? 'disabled' : ''">
-                                <a class="page-link"
-                                   th:with="lastPage=${bouquets.totalPages - 1}, params=${T(org.springframework.web.servlet.support.ServletUriComponentsBuilder).fromCurrentRequest().replaceQueryParam('page', bouquets.totalPages - 1).build().getQuery()}"
-                                   th:href="@{/bouquets?(page=${lastPage},${params})}">
+                                <a class="page-link pagination-link"
+                                   th:href="@{/bouquets(page=${bouquets.totalPages - 1}, search=${search}, categoryId=${selectedCategory}, sort=${currentSort}, direction=${currentDirection})}">
                                     <i class="fas fa-angle-double-right"></i>
                                 </a>
                             </li>
@@ -290,6 +194,7 @@
                     <div class="text-center text-muted mt-2">
                         Показано <span th:text="${bouquets.numberOfElements}">0</span> из
                         <span th:text="${bouquets.totalElements}">0</span> букетов
+                        <span th:if="${search != null}"> по запросу "<span th:text="${search}"></span>"</span>
                     </div>
                 </div>
             </div>
@@ -298,119 +203,80 @@
 </div>
 
 <script>
+    // Инициализация фильтров
     document.addEventListener('DOMContentLoaded', function() {
-        const filterForm = document.getElementById('filterForm');
-
-        // Авто-сабмит формы при изменении фильтров
-        const filterElements = document.querySelectorAll('#categoryId, #sort, #direction');
-        filterElements.forEach(element => {
-            element.addEventListener('change', function() {
-                filterForm.submit();
-            });
-        });
-
-        // Добавление в корзину
-        const addToCartButtons = document.querySelectorAll('.add-to-cart');
-        addToCartButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const bouquetId = this.getAttribute('data-bouquet-id');
-                addToCart(bouquetId);
-            });
-        });
-
-        function addToCart(bouquetId) {
-            console.log('Adding to cart:', bouquetId);
-            showAlert('Букет добавлен в корзину!', 'success');
-            updateCartCounter();
-        }
-
-        function showAlert(message, type) {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
-            alertDiv.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle me-2"></i>
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-
-            document.body.appendChild(alertDiv);
-
-            setTimeout(() => {
-                if (alertDiv.parentNode) {
-                    alertDiv.remove();
-                }
-            }, 3000);
-        }
-
-        function updateCartCounter() {
-            const cartCounter = document.getElementById('cartCounter');
-            if (cartCounter) {
-                const currentCount = parseInt(cartCounter.textContent) || 0;
-                cartCounter.textContent = currentCount + 1;
-            }
-        }
+        initFilters();
+        initPagination();
     });
 
-    async function addToCart(button) {
-    const bouquetId = button.getAttribute('data-bouquet-id');
+    function initFilters() {
+        const categoryFilter = document.getElementById('categoryFilter');
+        const sortFilter = document.getElementById('sortFilter');
+        const directionFilter = document.getElementById('directionFilter');
+        const searchInput = document.getElementById('searchInput');
+        const pageInput = document.getElementById('pageInput');
 
-    try {
-        const response = await fetch('/api/cart/add', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                bouquetId: parseInt(bouquetId),
-                quantity: 1
-            })
+        // Авто-сабмит при изменении фильтров
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', function() {
+                pageInput.value = 0; // Сбрасываем на первую страницу
+                document.getElementById('filterForm').submit();
+            });
+        }
+
+        if (sortFilter) {
+            sortFilter.addEventListener('change', function() {
+                pageInput.value = 0;
+                document.getElementById('filterForm').submit();
+            });
+        }
+
+        if (directionFilter) {
+            directionFilter.addEventListener('change', function() {
+                pageInput.value = 0;
+                document.getElementById('filterForm').submit();
+            });
+        }
+
+        // Поиск с debounce
+        if (searchInput) {
+            searchInput.addEventListener('input', debounce(function() {
+                pageInput.value = 0;
+                document.getElementById('filterForm').submit();
+            }, 800));
+        }
+    }
+
+    function initPagination() {
+        // Обработка кликов по пагинации через форму
+        document.querySelectorAll('.pagination-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = new URL(this.href);
+                const page = url.searchParams.get('page');
+
+                document.getElementById('pageInput').value = page;
+                document.getElementById('filterForm').submit();
+            });
         });
-
-        const result = await response.json();
-
-        if (result.success) {
-            // Показываем уведомление
-            showAlert('Товар добавлен в корзину!', 'success');
-
-            // Обновляем счетчик корзины (если он есть)
-            updateCartCounter();
-        } else {
-            showAlert('Ошибка: ' + result.message, 'error');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        showAlert('Ошибка при добавлении в корзину', 'error');
     }
-}
 
-function showAlert(message, type) {
-    // Создаем и показываем уведомление
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
-    alertDiv.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle me-2"></i>
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    document.body.appendChild(alertDiv);
-
-    setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.remove();
-        }
-    }, 3000);
-}
-
-function updateCartCounter() {
-    // Обновляем счетчик корзины в header
-    const counter = document.querySelector('.badge.bg-danger');
-    if (counter) {
-        const currentCount = parseInt(counter.textContent) || 0;
-        counter.textContent = currentCount + 1;
+    function resetFilters() {
+        window.location.href = '/bouquets';
     }
-}
+
+    // Debounce функция
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
 </script>
 </body>
 </html>

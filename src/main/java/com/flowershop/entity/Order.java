@@ -1,5 +1,6 @@
 package com.flowershop.entity;
 
+import com.flowershop.listener.JpaAuditListener;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -11,6 +12,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "orders")
+@EntityListeners(JpaAuditListener.class)
 public class Order extends BaseEntity {
 
     public enum OrderStatus {
@@ -59,7 +61,7 @@ public class Order extends BaseEntity {
     @Size(max = 1000)
     private String notes;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<OrderItem> orderItems = new ArrayList<>();
 
     // Constructors
